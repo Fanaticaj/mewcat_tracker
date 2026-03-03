@@ -15,6 +15,7 @@ import type {
   EligibilityState,
   RoomDestination,
   RoomsState,
+  SavDecodeResponse,
   SortDirection,
   SortField,
   StatFilterState,
@@ -57,6 +58,7 @@ export function usePlannerState() {
   const [statFilters, setStatFilters] = useState<StatFilterState>(
     createDefaultStatFilters,
   );
+  const [isDecodingSav, setIsDecodingSav] = useState(false);
   const [plannerMessage, setPlannerMessage] = useState("");
   const [plannerMessageTone, setPlannerMessageTone] = useState<
     "info" | "success" | "error"
@@ -176,6 +178,46 @@ export function usePlannerState() {
         setNotice(`Loaded ${file.name}.`, "success");
       },
     });
+  }
+
+  async function decodeSavFile(file: File) {
+    setIsDecodingSav(true);
+
+    try {
+      const response = await fetch("/api/decode-sav", {
+        body: await file.arrayBuffer(),
+        headers: {
+          "Content-Type": "application/octet-stream",
+          "X-File-Name": file.name,
+        },
+        method: "POST",
+      });
+
+      const payload = (await response.json()) as
+        | SavDecodeResponse
+        | { error?: string; message?: string };
+      const payloadError = "error" in payload ? payload.error : undefined;
+      const payloadMessage = "message" in payload ? payload.message : undefined;
+
+      if (!response.ok) {
+        throw new Error(
+          payloadError || payloadMessage || "Failed to decode that save file.",
+        );
+      }
+
+      setNotice(
+        `${payloadMessage || "Decoded the save file."} Clean up the CSV if needed, then use Import cats CSV.`,
+        "success",
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to decode that save file from the web app.";
+      setNotice(message, "error");
+    } finally {
+      setIsDecodingSav(false);
+    }
   }
 
   function addRoom() {
@@ -390,6 +432,7 @@ export function usePlannerState() {
     autoAssignEligibleCats,
     cats,
     clearAllRooms,
+    decodeSavFile,
     dragState,
     eligibleUnassignedCount: eligibleUnassignedCats.length,
     exportRoomFile,
@@ -402,6 +445,7 @@ export function usePlannerState() {
     handleDrop,
     importCsv,
     importRoomFile,
+    isDecodingSav,
     moveCatToRoom,
     newRoomName,
     plannerMessage,

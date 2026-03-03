@@ -12,6 +12,7 @@ export default function App() {
     autoAssignEligibleCats,
     cats,
     clearAllRooms,
+    decodeSavFile,
     dragState,
     eligibleUnassignedCount,
     exportRoomFile,
@@ -24,6 +25,7 @@ export default function App() {
     handleDrop,
     importCsv,
     importRoomFile,
+    isDecodingSav,
     moveCatToRoom,
     newRoomName,
     plannerMessage,
@@ -58,10 +60,12 @@ export default function App() {
           eligibleUnassignedCount={eligibleUnassignedCount}
           filteredCount={filteredCats.length}
           genderFilter={genderFilter}
+          isDecodingSav={isDecodingSav}
           newRoomName={newRoomName}
           onAddRoom={addRoom}
           onAutoAssignEligibleCats={autoAssignEligibleCats}
           onClearAllRooms={clearAllRooms}
+          onDecodeSavFile={decodeSavFile}
           onExportRoomFile={exportRoomFile}
           onGenderFilterChange={setGenderFilter}
           onImportCsv={importCsv}

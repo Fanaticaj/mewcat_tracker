@@ -24,10 +24,12 @@ type PlannerHeaderProps = {
   eligibleUnassignedCount: number;
   filteredCount: number;
   genderFilter: string;
+  isDecodingSav: boolean;
   newRoomName: string;
   onAddRoom: () => void;
   onAutoAssignEligibleCats: () => void;
   onClearAllRooms: () => void;
+  onDecodeSavFile: (file: File) => void;
   onExportRoomFile: () => void;
   onGenderFilterChange: (value: string) => void;
   onImportCsv: (file: File) => void;
@@ -60,10 +62,12 @@ export function PlannerHeader({
   eligibleUnassignedCount,
   filteredCount,
   genderFilter,
+  isDecodingSav,
   newRoomName,
   onAddRoom,
   onAutoAssignEligibleCats,
   onClearAllRooms,
+  onDecodeSavFile,
   onExportRoomFile,
   onGenderFilterChange,
   onImportCsv,
@@ -104,8 +108,9 @@ export function PlannerHeader({
               Mewgenics Cat Room Manager
             </Typography>
             <Typography color="text.secondary" sx={{ maxWidth: 820 }}>
-              Filter and sort the current roster, then save room plans to JSON so
-              you can revisit or share a breeding layout outside the browser.
+              Decode a Mewgenics save into CSV, clean it up if needed, then import it
+              into the planner. Room plans can also be saved to JSON for reuse outside
+              the browser.
             </Typography>
           </Box>
 
@@ -141,6 +146,24 @@ export function PlannerHeader({
                 onChange={(event) => {
                   const file = event.target.files?.[0];
                   if (file) onImportCsv(file);
+                  event.target.value = "";
+                }}
+              />
+            </Button>
+
+            <Button
+              variant="outlined"
+              component="label"
+              disabled={isDecodingSav}
+            >
+              {isDecodingSav ? "Decoding .sav..." : "Decode .sav to CSV"}
+              <input
+                hidden
+                type="file"
+                accept=".sav,application/octet-stream"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) onDecodeSavFile(file);
                   event.target.value = "";
                 }}
               />

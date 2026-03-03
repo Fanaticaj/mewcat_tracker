@@ -66,12 +66,13 @@ In practice, the UI should help answer questions like:
 
 Current workflow:
 
-1. Decode cat data from a Mewgenics save with `decompress.py` or use an existing CSV.
-2. Import the CSV into the browser planner.
-3. Filter and sort the roster to inspect specific stat floors or rankings.
-4. Drag cats into rooms, quick-move them, or use auto-assign for eligible unassigned cats.
-5. Review room-level breeding insights to decide which pairings are strongest.
-6. Save the room plan to a JSON file when the layout should persist outside the browser.
+1. Decode cat data from a Mewgenics save in the browser UI or use an existing CSV.
+2. Clean up the generated CSV if needed.
+3. Import the CSV into the browser planner.
+4. Filter and sort the roster to inspect specific stat floors or rankings.
+5. Drag cats into rooms, quick-move them, or use auto-assign for eligible unassigned cats.
+6. Review room-level breeding insights to decide which pairings are strongest.
+7. Save the room plan to a JSON file when the layout should persist outside the browser.
 
 The app currently supports planning and comparison only. It does not write results back
 into the game.
@@ -94,6 +95,8 @@ There are two main parts:
 - imports CSV data
 - manages rooms and breeding analysis
 - supports sorting, filtering, drag-drop, auto-assign, and room-plan file export/import
+- exposes a local Vite middleware endpoint that can run `decompress.py` on uploaded
+  `.sav` files and write decoded CSV output into `decoded_csv/`
 
 ## Current folder structure
 
@@ -205,6 +208,8 @@ Important nuance:
 - imported CSV data is still **not** persisted across reloads
 - room names and assignments **are** persisted in local storage
 - room plans can now be saved and loaded from a JSON file
+- uploaded `.sav` files can now be decoded from the web app, but this depends on the
+  local Vite server because the browser itself cannot run Python
 - search, sort, and filter UI state are still session-only
 
 ### Breeding analysis model
@@ -234,6 +239,7 @@ Important ranking nuance:
 
 As of 2026-03-03, the planner supports:
 
+- `.sav` upload from the web UI with local Python-backed CSV generation
 - CSV import
 - search by name, key, or token
 - gender/type filtering
@@ -274,6 +280,8 @@ Recent work completed after this file was created:
 11. Added room rename and delete controls so the planner is no longer locked to three
     rooms.
 12. Added JSON room-plan save/load so room information can live in a file.
+13. Added a local `.sav` decode flow in the web app that writes generated CSV files via
+    `decompress.py` into `decoded_csv/`.
 
 ## Current coding conventions
 
@@ -297,6 +305,8 @@ Comments should remain minimal and only explain non-obvious logic.
 - Breeding analysis is heuristic guidance, not guaranteed in-game breeding simulation.
 - Auto-assign is heuristic guidance, not a proven optimal global assignment solver.
 - CSV import is session-only; a reload still requires re-importing cat data.
+- The `.sav` decode button depends on the local Vite server middleware, so changes to
+  that integration require restarting `npm run dev`.
 - Root-level `.gitignore` ignores `*.csv` and `*.sav`, even though sample files may be
   present locally.
 - The root `package.json` is minimal; most frontend work should happen inside `ui/`.
@@ -344,3 +354,5 @@ When adding features, ask:
 - Documented the eligibility toggle and auto-assign features.
 - Updated the file after adding sorting, stat filtering, persistent room names, room
   rename/delete controls, and JSON room-plan save/load.
+- Updated the file after adding `.sav` decoding from the web app through a local
+  Python-backed Vite endpoint.

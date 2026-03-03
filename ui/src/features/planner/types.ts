@@ -70,3 +70,8 @@ export type PlannerRoomFile = {
   rooms: RoomsState;
   eligibility: EligibilityState;
 };
+
+export type SavDecodeResponse = {
+  csvPath: string;
+  message: string;
+};
