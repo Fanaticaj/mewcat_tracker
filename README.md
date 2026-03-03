@@ -9,6 +9,11 @@ manual comparison work.
 This project is **not** a cheat tool, save editor, or gameplay automation layer.
 It does not modify cats or write changes back into the game.
 
+<img width="3373" height="1549" alt="image" src="https://github.com/user-attachments/assets/ace9561c-cc39-45bd-9a80-cd274b5d10cd" />
+<img width="1070" height="1797" alt="image" src="https://github.com/user-attachments/assets/78aca961-cf39-4f22-b6b7-f84975e97817" />
+<img width="2223" height="427" alt="image" src="https://github.com/user-attachments/assets/d9bd7e6e-968d-475f-b098-bcc256b4c82a" />
+
+
 ## What The App Does
 
 - decode a supported Mewgenics `.sav` file into CSV from the web UI
