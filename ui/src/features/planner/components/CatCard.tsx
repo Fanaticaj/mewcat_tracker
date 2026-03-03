@@ -1,5 +1,13 @@
 import type { DragEvent } from "react";
-import { Box, Card, CardContent, Chip, Stack, Typography } from "@mui/material";
+import {
+  Box,
+  Card,
+  CardContent,
+  Chip,
+  Stack,
+  Switch,
+  Typography,
+} from "@mui/material";
 import { STAT_KEYS } from "../constants";
 import { quickMoveSelectStyle } from "../styles";
 import type { CatRow, RoomDestination } from "../types";
@@ -9,6 +17,7 @@ type CatCardProps = {
   cat: CatRow;
   currentRoom: RoomDestination;
   isDragging: boolean;
+  isEligibleForAutoAssign: boolean;
   onDragEnd: () => void;
   onDragStart: (
     event: DragEvent<HTMLElement>,
@@ -16,6 +25,7 @@ type CatCardProps = {
     fromRoom: RoomDestination,
   ) => void;
   onMove: (key: string, destination: RoomDestination) => void;
+  onToggleEligibility: (key: string) => void;
   roomNames: string[];
 };
 
@@ -23,9 +33,11 @@ export function CatCard({
   cat,
   currentRoom,
   isDragging,
+  isEligibleForAutoAssign,
   onDragEnd,
   onDragStart,
   onMove,
+  onToggleEligibility,
   roomNames,
 }: CatCardProps) {
   const accent = catAccent(cat);
@@ -182,6 +194,29 @@ export function CatCard({
           </Box>
 
           <Stack spacing={0.55}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Box>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ letterSpacing: "0.08em", fontWeight: 700 }}
+                >
+                  AUTO ASSIGN
+                </Typography>
+                <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+                  {isEligibleForAutoAssign ? "Eligible" : "Excluded"}
+                </Typography>
+              </Box>
+              <Switch
+                size="small"
+                checked={isEligibleForAutoAssign}
+                inputProps={{ "aria-label": `Include ${cat.name} in auto-assign` }}
+                onChange={() => onToggleEligibility(cat.key)}
+                onClick={(event) => event.stopPropagation()}
+                onMouseDown={(event) => event.stopPropagation()}
+              />
+            </Stack>
+
             <Typography
               variant="caption"
               color="text.secondary"

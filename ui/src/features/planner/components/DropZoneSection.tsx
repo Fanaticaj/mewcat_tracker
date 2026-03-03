@@ -15,6 +15,7 @@ type DropZoneSectionProps = {
   emptyMessage: string;
   getRoomForCat: (key: string) => RoomDestination;
   isActiveDropZone: boolean;
+  isCatEligibleForAutoAssign: (key: string) => boolean;
   onDragEnd: () => void;
   onDragLeave: (event: DragEvent<HTMLElement>, destination: RoomDestination) => void;
   onDragOver: (event: DragEvent<HTMLElement>, destination: RoomDestination) => void;
@@ -25,6 +26,7 @@ type DropZoneSectionProps = {
   ) => void;
   onDrop: (event: DragEvent<HTMLElement>, destination: RoomDestination) => void;
   onMove: (key: string, destination: RoomDestination) => void;
+  onToggleEligibility: (key: string) => void;
   roomNames: string[];
   subtitle: string;
   sx?: SxProps<Theme>;
@@ -40,12 +42,14 @@ export function DropZoneSection({
   emptyMessage,
   getRoomForCat,
   isActiveDropZone,
+  isCatEligibleForAutoAssign,
   onDragEnd,
   onDragLeave,
   onDragOver,
   onDragStart,
   onDrop,
   onMove,
+  onToggleEligibility,
   roomNames,
   subtitle,
   sx,
@@ -148,10 +152,12 @@ export function DropZoneSection({
                   key={cat.key}
                   cat={cat}
                   currentRoom={getRoomForCat(cat.key)}
+                  isEligibleForAutoAssign={isCatEligibleForAutoAssign(cat.key)}
                   isDragging={draggingCatKey === cat.key}
                   onDragEnd={onDragEnd}
                   onDragStart={onDragStart}
                   onMove={onMove}
+                  onToggleEligibility={onToggleEligibility}
                   roomNames={roomNames}
                 />
               ))}

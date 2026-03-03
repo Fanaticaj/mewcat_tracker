@@ -19,6 +19,8 @@ export type CatRow = {
 
 export type RoomsState = Record<string, string[]>;
 
+export type EligibilityState = Record<string, boolean>;
+
 export type RoomDestination = string | "unassigned";
 
 export type DragState = {

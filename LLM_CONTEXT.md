@@ -183,6 +183,7 @@ Rows with a populated `error` field are treated as invalid in the planner UI.
 The frontend currently persists **room assignments** in browser local storage using:
 
 - `mew_rooms_v1`
+- `mew_auto_assign_eligibility_v1`
 
 Current limitations:
 
@@ -206,10 +207,12 @@ The planner currently computes:
 - number of strong stats at 6+
 - combined ceiling total
 - ranked pair recommendations
+- heuristic room auto-assignment for eligible unassigned cats
 
 Important nuance:
 
 - a pair with complementary perfect 7s is ranked above a pair that only shares the same perfect 7s
+- the auto-assigner is heuristic and greedy; it favors completing strong pairs, seeding empty rooms with strong remaining pairs, then placing leftover cats where they most improve room quality
 
 This matches the product goal of helping users maximize stat transfer potential rather than just grouping already-similar cats together.
 
@@ -223,6 +226,8 @@ As of 2026-03-03, the planner supports:
 - manual room creation
 - drag-and-drop room assignment
 - quick-move dropdown fallback
+- per-card eligibility toggle for auto-assignment
+- auto-assign button for eligible unassigned cats
 - room-level breeding insight panel
 - “Best next pair” highlight per room
 - room stat leader summary
@@ -242,6 +247,11 @@ Recent work completed before this file was created:
    - kitten stat ceiling summaries
 4. Refactored the UI out of a monolithic `App.tsx` into feature-based modules under `ui/src/features/planner/`.
 5. Removed unused starter `App.css`.
+
+Recent work completed after this file was created:
+
+6. Added persistent per-cat eligibility toggles so users can exclude cats from automated planning when they are too young or otherwise unsuitable.
+7. Added an auto-assign action that distributes eligible unassigned cats into existing rooms using the current breeding heuristic.
 
 ## Current coding conventions
 
@@ -263,6 +273,7 @@ Comments should be minimal and only used where the code would otherwise be uncle
 - Playwright validation has been manual via MCP rather than committed test files.
 - `ui/README.md` is still the default Vite template and should not be treated as project-specific documentation.
 - The room analysis is heuristic guidance, not a guaranteed exact reproduction of in-game breeding rules.
+- The auto-assign feature is also heuristic guidance, not a guaranteed optimal global solution.
 - Root-level `.gitignore` ignores `*.csv` and `*.sav`, even though sample files are currently present locally.
 - The root `package.json` is minimal and only contains `@types/papaparse`; most frontend work should happen inside `ui/`.
 
@@ -306,3 +317,4 @@ When adding new features, ask:
 - Created this file as persistent project memory for future LLM-assisted work.
 - Documented current architecture after the planner refactor.
 - Documented current product goal, tech stack, workflow, limitations, and recent features.
+- Updated the file after adding the eligibility toggle and auto-assign feature for unassigned cats.

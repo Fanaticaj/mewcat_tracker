@@ -17,10 +17,12 @@ import { primaryActionSx } from "../styles";
 
 type PlannerHeaderProps = {
   assignedCount: number;
+  eligibleUnassignedCount: number;
   filteredCount: number;
   genderFilter: string;
   newRoomName: string;
   onAddRoom: () => void;
+  onAutoAssignEligibleCats: () => void;
   onClearAllRooms: () => void;
   onGenderFilterChange: (value: string) => void;
   onImportCsv: (file: File) => void;
@@ -34,10 +36,12 @@ type PlannerHeaderProps = {
 
 export function PlannerHeader({
   assignedCount,
+  eligibleUnassignedCount,
   filteredCount,
   genderFilter,
   newRoomName,
   onAddRoom,
+  onAutoAssignEligibleCats,
   onClearAllRooms,
   onGenderFilterChange,
   onImportCsv,
@@ -78,6 +82,11 @@ export function PlannerHeader({
             <Chip label={`${totalValidCats} cats loaded`} color="primary" />
             <Chip label={`${assignedCount} assigned`} variant="outlined" />
             <Chip label={`${roomCount} rooms`} variant="outlined" />
+            <Chip
+              label={`${eligibleUnassignedCount} eligible for auto-assign`}
+              variant="outlined"
+              color="success"
+            />
             <Chip label={`${filteredCount} visible after filters`} variant="outlined" />
           </Stack>
 
@@ -124,6 +133,16 @@ export function PlannerHeader({
             </FormControl>
 
             <Box sx={{ flex: 1, display: { xs: "none", md: "block" } }} />
+
+            <Button
+              variant="contained"
+              color="success"
+              onClick={onAutoAssignEligibleCats}
+              disabled={eligibleUnassignedCount === 0}
+              sx={{ width: { xs: "100%", md: "auto" } }}
+            >
+              Auto-assign eligible cats
+            </Button>
 
             <Button
               variant="outlined"

@@ -1,5 +1,12 @@
 import { STAT_KEYS } from "./constants";
-import type { CatRow, PairInsight, PairTone, RoomStatLeader, StatKey } from "./types";
+import type {
+  CatRow,
+  PairInsight,
+  PairTone,
+  RoomsState,
+  RoomStatLeader,
+  StatKey,
+} from "./types";
 
 export function catStatSum(cat: CatRow) {
   return STAT_KEYS.reduce((acc, key) => acc + (Number(cat[key]) || 0), 0);
@@ -20,6 +27,14 @@ export function averageStatSum(cats: CatRow[]) {
 
 export function getStatValue(cat: CatRow, stat: StatKey) {
   return Number(cat[stat]) || 0;
+}
+
+export function getPerfectStats(cat: CatRow) {
+  return STAT_KEYS.filter((stat) => getStatValue(cat, stat) === 7);
+}
+
+export function getStrongStatCount(cat: CatRow) {
+  return STAT_KEYS.filter((stat) => getStatValue(cat, stat) >= 6).length;
 }
 
 export function buildRoomStatLeaders(cats: CatRow[]): RoomStatLeader[] {
@@ -177,4 +192,200 @@ export function getPairNarrative(insight: PairInsight) {
   }
 
   return "No perfect 7 handoff yet, so this pairing mainly improves the room's 6+ floor.";
+}
+
+function getSoloAssignmentScore(cat: CatRow) {
+  return catStatSum(cat) + getStrongStatCount(cat) * 10 + getPerfectStats(cat).length * 55;
+}
+
+function getRoomAssignmentScore(cats: CatRow[]) {
+  if (cats.length === 0) return 0;
+  if (cats.length === 1) return getSoloAssignmentScore(cats[0]) * 0.55;
+
+  const pairInsights = buildRoomPairInsights(cats);
+  const bestPairScore = pairInsights[0]?.score ?? 0;
+  const backupPairScore = pairInsights[1]?.score ?? 0;
+  const distinctPerfectStats = new Set(cats.flatMap(getPerfectStats)).size;
+  const crowdPenalty = Math.max(0, cats.length - 2) * 18;
+
+  return (
+    bestPairScore +
+    backupPairScore * 0.18 +
+    distinctPerfectStats * 14 -
+    crowdPenalty
+  );
+}
+
+function selectBestMatchForSingleCatRooms(
+  roomNames: string[],
+  roomCats: Map<string, CatRow[]>,
+  pool: CatRow[],
+) {
+  let bestChoice:
+    | {
+        catIndex: number;
+        delta: number;
+        roomName: string;
+      }
+    | undefined;
+
+  for (const roomName of roomNames) {
+    const cats = roomCats.get(roomName) ?? [];
+    if (cats.length !== 1) continue;
+
+    const currentScore = getRoomAssignmentScore(cats);
+
+    for (let index = 0; index < pool.length; index += 1) {
+      const candidate = pool[index];
+      const nextScore = getRoomAssignmentScore([...cats, candidate]);
+      const delta = nextScore - currentScore;
+
+      if (
+        !bestChoice ||
+        delta > bestChoice.delta ||
+        (delta === bestChoice.delta && cats.length < (roomCats.get(bestChoice.roomName) ?? []).length)
+      ) {
+        bestChoice = {
+          catIndex: index,
+          delta,
+          roomName,
+        };
+      }
+    }
+  }
+
+  return bestChoice;
+}
+
+function selectBestPair(pool: CatRow[]) {
+  let bestPair:
+    | {
+        firstIndex: number;
+        score: number;
+        secondIndex: number;
+      }
+    | undefined;
+
+  for (let firstIndex = 0; firstIndex < pool.length; firstIndex += 1) {
+    for (let secondIndex = firstIndex + 1; secondIndex < pool.length; secondIndex += 1) {
+      const insight = buildPairInsight(pool[firstIndex], pool[secondIndex]);
+
+      if (
+        !bestPair ||
+        insight.score > bestPair.score ||
+        (insight.score === bestPair.score &&
+          insight.combinedTotal >
+            buildPairInsight(pool[bestPair.firstIndex], pool[bestPair.secondIndex]).combinedTotal)
+      ) {
+        bestPair = {
+          firstIndex,
+          score: insight.score,
+          secondIndex,
+        };
+      }
+    }
+  }
+
+  return bestPair;
+}
+
+function selectBestIncrementalAssignment(
+  roomNames: string[],
+  roomCats: Map<string, CatRow[]>,
+  pool: CatRow[],
+) {
+  let bestChoice:
+    | {
+        catIndex: number;
+        delta: number;
+        roomName: string;
+      }
+    | undefined;
+
+  for (const roomName of roomNames) {
+    const cats = roomCats.get(roomName) ?? [];
+    const currentScore = getRoomAssignmentScore(cats);
+
+    for (let index = 0; index < pool.length; index += 1) {
+      const candidate = pool[index];
+      const nextScore = getRoomAssignmentScore([...cats, candidate]);
+      const delta = nextScore - currentScore;
+
+      if (
+        !bestChoice ||
+        delta > bestChoice.delta ||
+        (delta === bestChoice.delta &&
+          cats.length < (roomCats.get(bestChoice.roomName) ?? []).length)
+      ) {
+        bestChoice = {
+          catIndex: index,
+          delta,
+          roomName,
+        };
+      }
+    }
+  }
+
+  return bestChoice;
+}
+
+export function buildAutoAssignedRooms({
+  catsByKey,
+  currentRooms,
+  eligibleUnassignedCats,
+  roomNames,
+}: {
+  catsByKey: Map<string, CatRow>;
+  currentRooms: RoomsState;
+  eligibleUnassignedCats: CatRow[];
+  roomNames: string[];
+}) {
+  const nextRooms = Object.fromEntries(
+    roomNames.map((roomName) => [roomName, [...(currentRooms[roomName] ?? [])]]),
+  ) as RoomsState;
+
+  const roomCats = new Map(
+    roomNames.map((roomName) => [
+      roomName,
+      (currentRooms[roomName] ?? [])
+        .map((key) => catsByKey.get(key))
+        .filter((cat): cat is CatRow => cat !== undefined),
+    ]),
+  );
+
+  const pool = [...eligibleUnassignedCats];
+
+  const assignCat = (roomName: string, catIndex: number) => {
+    const [cat] = pool.splice(catIndex, 1);
+    nextRooms[roomName].push(cat.key);
+    roomCats.get(roomName)?.push(cat);
+  };
+
+  // First complete rooms that already have one cat so the planner quickly forms viable pairs.
+  while (pool.length > 0) {
+    const choice = selectBestMatchForSingleCatRooms(roomNames, roomCats, pool);
+    if (!choice) break;
+    assignCat(choice.roomName, choice.catIndex);
+  }
+
+  // Then seed empty rooms with the strongest remaining pairs before distributing leftovers.
+  while (pool.length >= 2) {
+    const emptyRoomName = roomNames.find((roomName) => (roomCats.get(roomName) ?? []).length === 0);
+    if (!emptyRoomName) break;
+
+    const bestPair = selectBestPair(pool);
+    if (!bestPair) break;
+
+    assignCat(emptyRoomName, bestPair.secondIndex);
+    assignCat(emptyRoomName, bestPair.firstIndex);
+  }
+
+  // Finally place any leftovers where they improve room quality the most.
+  while (pool.length > 0) {
+    const choice = selectBestIncrementalAssignment(roomNames, roomCats, pool);
+    if (!choice) break;
+    assignCat(choice.roomName, choice.catIndex);
+  }
+
+  return nextRooms;
 }

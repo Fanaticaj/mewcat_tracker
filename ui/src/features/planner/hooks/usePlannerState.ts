@@ -2,12 +2,22 @@ import { useEffect, useMemo, useState } from "react";
 import type { DragEvent } from "react";
 import Papa from "papaparse";
 import { DEFAULT_ROOM_NAMES } from "../constants";
-import { loadRooms, saveRooms } from "../storage";
-import type { CatRow, DragState, RoomDestination, RoomsState } from "../types";
+import { loadEligibility, loadRooms, saveEligibility, saveRooms } from "../storage";
+import type {
+  CatRow,
+  DragState,
+  EligibilityState,
+  RoomDestination,
+  RoomsState,
+} from "../types";
+import { buildAutoAssignedRooms } from "../utils";
 
 export function usePlannerState() {
   const [cats, setCats] = useState<CatRow[]>([]);
   const [rooms, setRooms] = useState<RoomsState>(() => loadRooms());
+  const [eligibility, setEligibility] = useState<EligibilityState>(() =>
+    loadEligibility(),
+  );
   const [roomNames, setRoomNames] = useState<string[]>(DEFAULT_ROOM_NAMES);
   const [newRoomName, setNewRoomName] = useState("");
   const [search, setSearch] = useState("");
@@ -16,6 +26,7 @@ export function usePlannerState() {
   const [activeDropZone, setActiveDropZone] = useState<RoomDestination | null>(null);
 
   useEffect(() => saveRooms(rooms), [rooms]);
+  useEffect(() => saveEligibility(eligibility), [eligibility]);
 
   const validCats = useMemo(
     () => cats.filter((cat) => !(cat.error && cat.error.length > 0)),
@@ -42,6 +53,8 @@ export function usePlannerState() {
     return assigned;
   }, [rooms]);
 
+  const isCatEligible = (catKey: string) => eligibility[catKey] ?? true;
+
   const filteredCats = useMemo(() => {
     const query = search.trim().toLowerCase();
 
@@ -65,6 +78,11 @@ export function usePlannerState() {
   const unassigned = useMemo(
     () => filteredCats.filter((cat) => !assignedKeys.has(cat.key)),
     [assignedKeys, filteredCats],
+  );
+
+  const eligibleUnassignedCats = useMemo(
+    () => validCats.filter((cat) => !assignedKeys.has(cat.key) && isCatEligible(cat.key)),
+    [assignedKeys, eligibility, validCats],
   );
 
   const tokenKinds = useMemo(() => {
@@ -135,6 +153,26 @@ export function usePlannerState() {
     setRooms({});
   }
 
+  function toggleCatEligibility(catKey: string) {
+    setEligibility((current) => ({
+      ...current,
+      [catKey]: !(current[catKey] ?? true),
+    }));
+  }
+
+  function autoAssignEligibleCats() {
+    if (eligibleUnassignedCats.length === 0 || roomNames.length === 0) return;
+
+    setRooms((current) =>
+      buildAutoAssignedRooms({
+        catsByKey,
+        currentRooms: current,
+        eligibleUnassignedCats,
+        roomNames,
+      }),
+    );
+  }
+
   function handleDragStart(
     event: DragEvent<HTMLElement>,
     catKey: string,
@@ -199,9 +237,11 @@ export function usePlannerState() {
     activeDropZone,
     addRoom,
     assignedCount: assignedKeys.size,
+    autoAssignEligibleCats,
     cats,
     clearAllRooms,
     dragState,
+    eligibleUnassignedCount: eligibleUnassignedCats.length,
     filteredCats,
     genderFilter,
     handleDragEnd,
@@ -217,9 +257,11 @@ export function usePlannerState() {
     setGenderFilter,
     setNewRoomName,
     setSearch,
+    toggleCatEligibility,
     tokenKinds,
     totalValidCats: validCats.length,
     unassigned,
     visibleRoomCats,
+    wasCatMarkedEligible: isCatEligible,
   };
 }

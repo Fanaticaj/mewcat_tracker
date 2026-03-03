@@ -9,9 +9,11 @@ export default function App() {
     activeDropZone,
     addRoom,
     assignedCount,
+    autoAssignEligibleCats,
     cats,
     clearAllRooms,
     dragState,
+    eligibleUnassignedCount,
     filteredCats,
     genderFilter,
     handleDragEnd,
@@ -27,10 +29,12 @@ export default function App() {
     setGenderFilter,
     setNewRoomName,
     setSearch,
+    toggleCatEligibility,
     tokenKinds,
     totalValidCats,
     unassigned,
     visibleRoomCats,
+    wasCatMarkedEligible,
   } = usePlannerState();
 
   return (
@@ -38,10 +42,12 @@ export default function App() {
       <Stack spacing={3}>
         <PlannerHeader
           assignedCount={assignedCount}
+          eligibleUnassignedCount={eligibleUnassignedCount}
           filteredCount={filteredCats.length}
           genderFilter={genderFilter}
           newRoomName={newRoomName}
           onAddRoom={addRoom}
+          onAutoAssignEligibleCats={autoAssignEligibleCats}
           onClearAllRooms={clearAllRooms}
           onGenderFilterChange={setGenderFilter}
           onImportCsv={importCsv}
@@ -80,7 +86,9 @@ export default function App() {
                 ? "Import a CSV to start building your room plan."
                 : "No unassigned cats match the current filters."
             }
+            isCatEligibleForAutoAssign={wasCatMarkedEligible}
             sx={{ flex: 1.15, minWidth: 0, width: "100%" }}
+            onToggleEligibility={toggleCatEligibility}
           />
 
           <Stack spacing={2} sx={{ flex: 1, minWidth: 0, width: "100%" }}>
@@ -102,10 +110,12 @@ export default function App() {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
+                isCatEligibleForAutoAssign={wasCatMarkedEligible}
                 dropId={roomName}
                 isActiveDropZone={activeDropZone === roomName}
                 draggingCatKey={dragState?.catKey ?? null}
                 emptyMessage="No cats in this room yet."
+                onToggleEligibility={toggleCatEligibility}
               />
             ))}
           </Stack>
