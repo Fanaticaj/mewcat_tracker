@@ -105,6 +105,7 @@ Only meaningful project files are listed here. Ignore generated folders like
 
 ```text
 mewcat_tracker/
+|- README.md
 |- LLM_CONTEXT.md
 |- decompress.py
 |- cats.csv
@@ -112,6 +113,7 @@ mewcat_tracker/
 |- steamcampaign01.sav
 |- package.json
 `- ui/
+   |- README.md
    |- package.json
    |- vite.config.ts
    |- tsconfig.json
@@ -120,6 +122,7 @@ mewcat_tracker/
       |- App.tsx
       |- main.tsx
       |- index.css
+      |- theme.ts
       `- features/
          `- planner/
             |- constants.ts
@@ -255,6 +258,7 @@ As of 2026-03-03, the planner supports:
 - room-level breeding insight panels
 - JSON room-plan export
 - JSON room-plan import
+- a compact planner header with collapsible sort and filter controls
 - a warm Mewgenics-inspired visual theme based on parchment, ash, moss, clay, and charcoal tones
 - responsive card-based layout
 
@@ -284,6 +288,9 @@ Recent work completed after this file was created:
 13. Added a local `.sav` decode flow in the web app that writes generated CSV files via
     `decompress.py` into `decoded_csv/`.
 14. Re-themed the planner UI to better match Mewgenics art direction with warmer earthy tones.
+15. Tightened the visual system with a more compact header, collapsible sort/filter controls,
+    and reduced corner radii for better readability.
+16. Added a real root README and replaced the old `ui/README.md` template with a workspace note.
 
 ## Current coding conventions
 
@@ -302,8 +309,8 @@ Comments should remain minimal and only explain non-obvious logic.
 
 - No automated test suite exists yet.
 - Playwright verification is still manual via MCP rather than committed browser tests.
-- `ui/README.md` is still the default Vite template and should not be treated as
-  project-specific documentation.
+- The root `README.md` is the main user-facing documentation; `ui/README.md` is only a
+  short frontend workspace note.
 - Breeding analysis is heuristic guidance, not guaranteed in-game breeding simulation.
 - Auto-assign is heuristic guidance, not a proven optimal global assignment solver.
 - CSV import is session-only; a reload still requires re-importing cat data.
@@ -358,3 +365,5 @@ When adding features, ask:
   rename/delete controls, and JSON room-plan save/load.
 - Updated the file after adding `.sav` decoding from the web app through a local
   Python-backed Vite endpoint.
+- Updated the file after adding project-specific README documentation and tightening
+  the planner UI shape system.
