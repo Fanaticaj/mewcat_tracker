@@ -1,0 +1,5 @@
+export const STAT_KEYS = ["STR", "DEX", "CON", "INT", "SPD", "CHA", "LCK"] as const;
+
+export const DEFAULT_ROOM_NAMES = ["Room A", "Room B", "Room C"];
+
+export const ROOMS_STORAGE_KEY = "mew_rooms_v1";
