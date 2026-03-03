@@ -1,8 +1,20 @@
 import type { CSSProperties } from "react";
 
 export const primaryActionSx = {
-  minWidth: { xs: "100%", md: 180 },
+  minWidth: { xs: "100%", sm: 160 },
+  minHeight: 38,
   boxShadow: "none",
+  borderRadius: 999,
+  textTransform: "none",
+  fontWeight: 700,
+};
+
+export const secondaryActionSx = {
+  minWidth: { xs: "100%", sm: "auto" },
+  minHeight: 38,
+  borderRadius: 999,
+  textTransform: "none",
+  fontWeight: 700,
 };
 
 export const analysisPanelSx = {

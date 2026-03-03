@@ -1,3 +1,11 @@
+import { useMemo, useState } from "react";
+import AutoAwesomeRounded from "@mui/icons-material/AutoAwesomeRounded";
+import FilterAltRounded from "@mui/icons-material/FilterAltRounded";
+import KeyboardArrowDownRounded from "@mui/icons-material/KeyboardArrowDownRounded";
+import KeyboardArrowUpRounded from "@mui/icons-material/KeyboardArrowUpRounded";
+import SaveAltRounded from "@mui/icons-material/SaveAltRounded";
+import SearchRounded from "@mui/icons-material/SearchRounded";
+import UploadFileRounded from "@mui/icons-material/UploadFileRounded";
 import {
   Alert,
   Box,
@@ -5,9 +13,11 @@ import {
   Card,
   CardContent,
   Chip,
+  Collapse,
   Divider,
   FormControl,
   Grid,
+  InputAdornment,
   InputLabel,
   MenuItem,
   Select,
@@ -16,7 +26,7 @@ import {
   Typography,
 } from "@mui/material";
 import { STAT_KEYS } from "../constants";
-import { primaryActionSx } from "../styles";
+import { primaryActionSx, secondaryActionSx } from "../styles";
 import type { SortDirection, SortField, StatFilterState } from "../types";
 
 type PlannerHeaderProps = {
@@ -88,88 +98,187 @@ export function PlannerHeader({
   tokenKinds,
   totalValidCats,
 }: PlannerHeaderProps) {
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const activeStatFilterCount = useMemo(
+    () => Object.values(statFilters).filter((value) => value.trim().length > 0).length,
+    [statFilters],
+  );
+  const activeControlCount =
+    activeStatFilterCount +
+    (genderFilter !== "all" ? 1 : 0) +
+    (sortField !== "name" ? 1 : 0) +
+    (sortDirection !== "asc" ? 1 : 0);
+
   return (
     <Card
       sx={{
-        borderRadius: 6,
+        borderRadius: 5,
         border: "1px solid rgba(15, 23, 42, 0.08)",
         background:
-          "linear-gradient(135deg, rgba(255,255,255,0.98), rgba(240,244,255,0.96))",
-        boxShadow: "0 24px 60px rgba(15, 23, 42, 0.08)",
+          "linear-gradient(135deg, rgba(255,255,255,0.98), rgba(244,247,255,0.98))",
+        boxShadow: "0 18px 42px rgba(15, 23, 42, 0.06)",
       }}
     >
-      <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
-        <Stack spacing={2.5}>
-          <Box>
-            <Typography variant="overline" sx={{ letterSpacing: "0.12em" }}>
-              Breeding Planner
-            </Typography>
-            <Typography variant="h3" fontWeight={800} sx={{ mb: 1 }}>
-              Mewgenics Cat Room Manager
-            </Typography>
-            <Typography color="text.secondary" sx={{ maxWidth: 820 }}>
-              Decode a Mewgenics save into CSV, clean it up if needed, then import it
-              into the planner. Room plans can also be saved to JSON for reuse outside
-              the browser.
-            </Typography>
-          </Box>
+      <CardContent sx={{ p: { xs: 2, md: 2.5 } }}>
+        <Stack spacing={1.75}>
+          <Stack
+            direction={{ xs: "column", lg: "row" }}
+            justifyContent="space-between"
+            alignItems={{ xs: "flex-start", lg: "center" }}
+            spacing={1.5}
+          >
+            <Box sx={{ minWidth: 0 }}>
+              <Typography
+                variant="overline"
+                sx={{ letterSpacing: "0.14em", color: "primary.main" }}
+              >
+                Breeding Planner
+              </Typography>
+              <Typography
+                fontWeight={800}
+                sx={{
+                  fontSize: { xs: "1.4rem", md: "1.8rem" },
+                  lineHeight: 1.05,
+                  mb: 0.35,
+                }}
+              >
+                Mewgenics Cat Room Manager
+              </Typography>
+              <Typography
+                color="text.secondary"
+                variant="body2"
+                sx={{ maxWidth: 700, fontSize: { xs: 13, md: 14 } }}
+              >
+                Decode a save, clean the CSV if needed, import it, and compare breeding
+                room plans without leaving the tracker.
+              </Typography>
+            </Box>
+
+            <Stack
+              direction="row"
+              spacing={1}
+              flexWrap="wrap"
+              useFlexGap
+              sx={{ width: { xs: "100%", lg: "auto" } }}
+            >
+              <Button
+                variant="contained"
+                component="label"
+                startIcon={<UploadFileRounded />}
+                sx={primaryActionSx}
+              >
+                Import cats CSV
+                <input
+                  hidden
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) onImportCsv(file);
+                    event.target.value = "";
+                  }}
+                />
+              </Button>
+
+              <Button
+                variant="outlined"
+                component="label"
+                startIcon={<SaveAltRounded />}
+                disabled={isDecodingSav}
+                sx={secondaryActionSx}
+              >
+                {isDecodingSav ? "Decoding .sav..." : "Decode .sav"}
+                <input
+                  hidden
+                  type="file"
+                  accept=".sav,application/octet-stream"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) onDecodeSavFile(file);
+                    event.target.value = "";
+                  }}
+                />
+              </Button>
+
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<AutoAwesomeRounded />}
+                onClick={onAutoAssignEligibleCats}
+                disabled={eligibleUnassignedCount === 0 || roomCount === 0}
+                sx={primaryActionSx}
+              >
+                Auto-assign
+              </Button>
+            </Stack>
+          </Stack>
 
           {plannerMessage ? (
-            <Alert severity={plannerMessageTone} sx={{ borderRadius: 3 }}>
+            <Alert
+              severity={plannerMessageTone}
+              sx={{
+                borderRadius: 3,
+                py: 0,
+                "& .MuiAlert-message": { py: 0.85 },
+              }}
+            >
               {plannerMessage}
             </Alert>
           ) : null}
 
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-            <Chip label={`${totalValidCats} cats loaded`} color="primary" />
-            <Chip label={`${assignedCount} assigned`} variant="outlined" />
-            <Chip label={`${roomCount} rooms`} variant="outlined" />
+          <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
+            <Chip size="small" label={`${totalValidCats} loaded`} color="primary" />
+            <Chip size="small" label={`${assignedCount} assigned`} variant="outlined" />
+            <Chip size="small" label={`${roomCount} rooms`} variant="outlined" />
             <Chip
-              label={`${eligibleUnassignedCount} eligible for auto-assign`}
+              size="small"
+              label={`${eligibleUnassignedCount} eligible`}
               variant="outlined"
               color="success"
             />
-            <Chip label={`${filteredCount} visible after filters`} variant="outlined" />
+            <Chip
+              size="small"
+              label={`${filteredCount} visible`}
+              variant="outlined"
+            />
           </Stack>
 
           <Stack
-            direction={{ xs: "column", xl: "row" }}
-            spacing={1.5}
-            alignItems={{ xs: "stretch", xl: "center" }}
+            direction={{ xs: "column", lg: "row" }}
+            spacing={1}
+            alignItems={{ xs: "stretch", lg: "center" }}
           >
-            <Button variant="contained" component="label" sx={primaryActionSx}>
-              Import cats CSV
-              <input
-                hidden
-                type="file"
-                accept=".csv,text/csv"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) onImportCsv(file);
-                  event.target.value = "";
-                }}
-              />
-            </Button>
+            <TextField
+              fullWidth
+              label="Search name, key, or token"
+              value={search}
+              onChange={(event) => onSearchChange(event.target.value)}
+              size="small"
+              sx={{ flex: 1 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchRounded sx={{ fontSize: 18, color: "text.secondary" }} />
+                  </InputAdornment>
+                ),
+              }}
+            />
 
             <Button
-              variant="outlined"
-              component="label"
-              disabled={isDecodingSav}
+              variant={activeControlCount > 0 ? "contained" : "outlined"}
+              color={activeControlCount > 0 ? "primary" : "inherit"}
+              startIcon={<FilterAltRounded />}
+              endIcon={
+                filtersOpen ? <KeyboardArrowUpRounded /> : <KeyboardArrowDownRounded />
+              }
+              onClick={() => setFiltersOpen((current) => !current)}
+              sx={secondaryActionSx}
             >
-              {isDecodingSav ? "Decoding .sav..." : "Decode .sav to CSV"}
-              <input
-                hidden
-                type="file"
-                accept=".sav,application/octet-stream"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) onDecodeSavFile(file);
-                  event.target.value = "";
-                }}
-              />
+              Filters & sort{activeControlCount > 0 ? ` (${activeControlCount})` : ""}
             </Button>
 
-            <Button variant="outlined" component="label">
+            <Button variant="outlined" component="label" sx={secondaryActionSx}>
               Load room file
               <input
                 hidden
@@ -183,144 +292,23 @@ export function PlannerHeader({
               />
             </Button>
 
-            <Button variant="outlined" onClick={onExportRoomFile}>
+            <Button variant="outlined" onClick={onExportRoomFile} sx={secondaryActionSx}>
               Save room file
-            </Button>
-
-            <Box sx={{ flex: 1, display: { xs: "none", xl: "block" } }} />
-
-            <Button
-              variant="contained"
-              color="success"
-              onClick={onAutoAssignEligibleCats}
-              disabled={eligibleUnassignedCount === 0 || roomCount === 0}
-              sx={{ width: { xs: "100%", xl: "auto" } }}
-            >
-              Auto-assign eligible cats
             </Button>
 
             <Button
               variant="outlined"
               color="warning"
               onClick={onClearAllRooms}
-              sx={{ width: { xs: "100%", xl: "auto" } }}
+              sx={secondaryActionSx}
             >
-              Clear room assignments
+              Clear rooms
             </Button>
           </Stack>
 
-          <Grid container spacing={1.5}>
-            <Grid size={{ xs: 12, md: 6, xl: 4 }}>
-              <TextField
-                fullWidth
-                label="Search name, key, or token"
-                value={search}
-                onChange={(event) => onSearchChange(event.target.value)}
-                size="small"
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6, xl: 2.5 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Gender / Type</InputLabel>
-                <Select
-                  label="Gender / Type"
-                  value={genderFilter}
-                  onChange={(event) => onGenderFilterChange(event.target.value)}
-                >
-                  <MenuItem value="all">All</MenuItem>
-                  {tokenKinds.map((kind) => (
-                    <MenuItem key={kind} value={kind}>
-                      {kind}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6, xl: 2.5 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Sort by</InputLabel>
-                <Select
-                  label="Sort by"
-                  value={sortField}
-                  onChange={(event) => onSortFieldChange(event.target.value as SortField)}
-                >
-                  {sortFieldOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6, xl: 3 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Direction</InputLabel>
-                <Select
-                  label="Direction"
-                  value={sortDirection}
-                  onChange={(event) =>
-                    onSortDirectionChange(event.target.value as SortDirection)
-                  }
-                >
-                  <MenuItem value="asc">Ascending</MenuItem>
-                  <MenuItem value="desc">Descending</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-
-          <Divider />
-
-          <Stack spacing={1.5}>
-            <Stack
-              direction={{ xs: "column", md: "row" }}
-              justifyContent="space-between"
-              alignItems={{ xs: "flex-start", md: "center" }}
-              spacing={1}
-            >
-              <Box>
-                <Typography variant="h6" fontWeight={800}>
-                  Stat floor filters
-                </Typography>
-                <Typography color="text.secondary">
-                  Leave a field blank to ignore it. A value of `6` means show only cats
-                  with at least 6 in that stat.
-                </Typography>
-              </Box>
-
-              <Button variant="text" onClick={onResetStatFilters}>
-                Reset stat filters
-              </Button>
-            </Stack>
-
-            <Grid container spacing={1.25}>
-              {STAT_KEYS.map((stat) => (
-                <Grid key={stat} size={{ xs: 6, sm: 3, lg: "grow" }}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label={`${stat} min`}
-                    value={statFilters[stat]}
-                    onChange={(event) => onStatFilterChange(stat, event.target.value)}
-                    inputProps={{
-                      inputMode: "numeric",
-                      pattern: "[0-7]*",
-                      maxLength: 1,
-                    }}
-                  />
-                </Grid>
-              ))}
-            </Grid>
-          </Stack>
-
-          <Divider />
-
           <Stack
             direction={{ xs: "column", md: "row" }}
-            spacing={2}
+            spacing={1}
             alignItems={{ xs: "stretch", md: "center" }}
           >
             <TextField
@@ -328,20 +316,147 @@ export function PlannerHeader({
               size="small"
               value={newRoomName}
               onChange={(event) => onNewRoomNameChange(event.target.value)}
-              sx={{ width: { xs: "100%", md: 280 } }}
+              sx={{ width: { xs: "100%", md: 220 } }}
             />
-            <Button
-              variant="outlined"
-              onClick={onAddRoom}
-              sx={{ width: { xs: "100%", md: "auto" } }}
-            >
+            <Button variant="outlined" onClick={onAddRoom} sx={secondaryActionSx}>
               Add room
             </Button>
-            <Typography color="text.secondary">
-              Rooms can now be renamed, removed, and saved to a JSON room file so a
-              plan can survive browser resets.
+            <Typography color="text.secondary" variant="body2">
+              Rooms persist locally and can also be saved to a JSON plan.
             </Typography>
           </Stack>
+
+          <Collapse in={filtersOpen} timeout={180}>
+            <Box
+              sx={{
+                mt: 0.25,
+                borderRadius: 4,
+                border: "1px solid rgba(148, 163, 184, 0.16)",
+                background: "rgba(255,255,255,0.86)",
+                px: { xs: 1.25, md: 1.5 },
+                py: 1.5,
+              }}
+            >
+              <Stack spacing={1.25}>
+                <Stack
+                  direction={{ xs: "column", md: "row" }}
+                  justifyContent="space-between"
+                  alignItems={{ xs: "flex-start", md: "center" }}
+                  spacing={0.75}
+                >
+                  <Box>
+                    <Typography variant="subtitle2" fontWeight={800}>
+                      Sort and filter controls
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Keep the roster focused by trait floor, gender, and ranking order.
+                    </Typography>
+                  </Box>
+                  <Button variant="text" onClick={onResetStatFilters} sx={secondaryActionSx}>
+                    Reset stat floors
+                  </Button>
+                </Stack>
+
+                <Grid container spacing={1.25}>
+                  <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Gender / Type</InputLabel>
+                      <Select
+                        label="Gender / Type"
+                        value={genderFilter}
+                        onChange={(event) => onGenderFilterChange(event.target.value)}
+                      >
+                        <MenuItem value="all">All</MenuItem>
+                        {tokenKinds.map((kind) => (
+                          <MenuItem key={kind} value={kind}>
+                            {kind}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Sort by</InputLabel>
+                      <Select
+                        label="Sort by"
+                        value={sortField}
+                        onChange={(event) =>
+                          onSortFieldChange(event.target.value as SortField)
+                        }
+                      >
+                        {sortFieldOptions.map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            {option.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Direction</InputLabel>
+                      <Select
+                        label="Direction"
+                        value={sortDirection}
+                        onChange={(event) =>
+                          onSortDirectionChange(event.target.value as SortDirection)
+                        }
+                      >
+                        <MenuItem value="asc">Ascending</MenuItem>
+                        <MenuItem value="desc">Descending</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6, lg: 2 }}>
+                    <Chip
+                      label={
+                        activeStatFilterCount > 0
+                          ? `${activeStatFilterCount} stat floors active`
+                          : "No stat floors"
+                      }
+                      variant="outlined"
+                      sx={{
+                        mt: { xs: 0, lg: 0.5 },
+                        width: "100%",
+                        height: 40,
+                        justifyContent: "flex-start",
+                        "& .MuiChip-label": {
+                          width: "100%",
+                          textAlign: "center",
+                          fontWeight: 700,
+                        },
+                      }}
+                    />
+                  </Grid>
+                </Grid>
+
+                <Divider />
+
+                <Grid container spacing={1}>
+                  {STAT_KEYS.map((stat) => (
+                    <Grid key={stat} size={{ xs: 6, sm: 3, lg: "grow" }}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label={`${stat} min`}
+                        value={statFilters[stat]}
+                        onChange={(event) => onStatFilterChange(stat, event.target.value)}
+                        inputProps={{
+                          inputMode: "numeric",
+                          pattern: "[0-7]*",
+                          maxLength: 1,
+                        }}
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </Stack>
+            </Box>
+          </Collapse>
         </Stack>
       </CardContent>
     </Card>
