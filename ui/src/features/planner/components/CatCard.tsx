@@ -50,20 +50,20 @@ export function CatCard({
       sx={{
         position: "relative",
         overflow: "hidden",
-        borderRadius: 3.5,
+        borderRadius: 2.25,
         border: `1px solid ${accent}26`,
         background:
-          "linear-gradient(180deg, rgba(255,255,255,0.99), rgba(248,250,252,0.99))",
+          "linear-gradient(180deg, rgba(251,245,236,0.98), rgba(240,232,223,0.98))",
         boxShadow: isDragging
-          ? "0 12px 28px rgba(15, 23, 42, 0.10)"
-          : "0 8px 18px rgba(15, 23, 42, 0.06)",
+          ? "0 14px 28px rgba(45, 35, 29, 0.12)"
+          : "0 8px 18px rgba(45, 35, 29, 0.08)",
         opacity: isDragging ? 0.52 : 1,
         transform: isDragging ? "scale(0.985)" : "translateY(0)",
         transition:
           "transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease",
         "&:hover": {
           transform: "translateY(-1px)",
-          boxShadow: "0 12px 24px rgba(15, 23, 42, 0.09)",
+          boxShadow: "0 12px 24px rgba(45, 35, 29, 0.12)",
         },
       }}
     >
@@ -107,7 +107,7 @@ export function CatCard({
               sx={{
                 flexShrink: 0,
                 minWidth: 68,
-                borderRadius: 2.5,
+                borderRadius: 1.5,
                 background: `linear-gradient(180deg, ${accent}, ${accent}cc)`,
                 color: "#fff",
                 px: 1,
@@ -163,9 +163,9 @@ export function CatCard({
                 key={stat}
                 sx={{
                   minWidth: 0,
-                  borderRadius: 2,
-                  border: "1px solid rgba(148, 163, 184, 0.18)",
-                  background: "rgba(15, 23, 42, 0.03)",
+                  borderRadius: 1.1,
+                  border: "1px solid rgba(90, 67, 51, 0.12)",
+                  background: "rgba(255, 250, 245, 0.52)",
                   px: 0.45,
                   py: 0.7,
                   textAlign: "center",

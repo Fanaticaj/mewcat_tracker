@@ -27,10 +27,10 @@ export function RoomInsights({
   return (
     <Box
       sx={{
-        borderRadius: 4,
-        border: "1px solid rgba(59, 130, 246, 0.12)",
+        borderRadius: 2.5,
+        border: "1px solid rgba(90, 67, 51, 0.12)",
         background:
-          "linear-gradient(180deg, rgba(244,248,255,0.96), rgba(255,255,255,0.98))",
+          "linear-gradient(180deg, rgba(246,240,232,0.96), rgba(251,245,236,0.98))",
         p: { xs: 1.35, md: 1.5 },
       }}
     >
@@ -210,13 +210,13 @@ export function RoomInsights({
                         key={stat}
                         sx={{
                           minWidth: 0,
-                          borderRadius: 2.2,
+                          borderRadius: 1.25,
                           border: isPerfect
-                            ? "1px solid rgba(34, 197, 94, 0.24)"
-                            : "1px solid rgba(148, 163, 184, 0.18)",
+                            ? "1px solid rgba(109, 120, 93, 0.28)"
+                            : "1px solid rgba(90, 67, 51, 0.12)",
                           background: isPerfect
-                            ? "rgba(255,255,255,0.84)"
-                            : "rgba(255,255,255,0.6)",
+                            ? "rgba(247,242,235,0.88)"
+                            : "rgba(255,250,245,0.66)",
                           px: 0.45,
                           py: 0.65,
                           textAlign: "center",
@@ -235,7 +235,7 @@ export function RoomInsights({
                             fontSize: 15,
                             lineHeight: 1,
                             fontWeight: 800,
-                            color: isPerfect ? "#15803d" : "text.primary",
+                            color: isPerfect ? "#58664a" : "text.primary",
                           }}
                         >
                           {value}
@@ -283,15 +283,15 @@ export function RoomInsights({
                   key={leader.stat}
                   sx={{
                     minWidth: 0,
-                    borderRadius: 2.5,
+                    borderRadius: 1.5,
                     border:
                       leader.maxValue === 7
-                        ? "1px solid rgba(34, 197, 94, 0.2)"
-                        : "1px solid rgba(148, 163, 184, 0.18)",
+                        ? "1px solid rgba(109, 120, 93, 0.22)"
+                        : "1px solid rgba(90, 67, 51, 0.14)",
                     background:
                       leader.maxValue === 7
-                        ? "linear-gradient(180deg, rgba(240,253,244,0.96), rgba(255,255,255,0.9))"
-                        : "rgba(255, 255, 255, 0.82)",
+                        ? "linear-gradient(180deg, rgba(239,244,232,0.96), rgba(251,245,236,0.9))"
+                        : "rgba(251, 245, 236, 0.82)",
                     px: 0.85,
                     py: 0.8,
                   }}
@@ -326,7 +326,7 @@ export function RoomInsights({
                     sx={{
                       mt: 0.35,
                       fontSize: 10.5,
-                      color: leader.leaders.length > 1 ? "#b45309" : "#475569",
+                      color: leader.leaders.length > 1 ? "#9a6b49" : "#6b5a4d",
                     }}
                   >
                     {leader.leaders.length > 1 ? "Shared lead" : "Primary owner"}
@@ -373,7 +373,7 @@ function PairInsightCard({ insight }: { insight: PairInsight }) {
   return (
     <Box
       sx={{
-        borderRadius: 2.5,
+        borderRadius: 1.75,
         border: `1px solid ${tone.border}`,
         background: tone.background,
         p: 1.05,
@@ -470,13 +470,13 @@ function PairInsightCard({ insight }: { insight: PairInsight }) {
                 key={stat}
                 sx={{
                   minWidth: 0,
-                  borderRadius: 2,
+                  borderRadius: 1.1,
                   border: isPerfect
-                    ? "1px solid rgba(34, 197, 94, 0.24)"
-                    : "1px solid rgba(148, 163, 184, 0.18)",
+                    ? "1px solid rgba(109, 120, 93, 0.26)"
+                    : "1px solid rgba(90, 67, 51, 0.12)",
                   background: isPerfect
-                    ? "rgba(255,255,255,0.82)"
-                    : "rgba(248,250,252,0.84)",
+                    ? "rgba(247,242,235,0.84)"
+                    : "rgba(255,248,241,0.84)",
                   px: 0.35,
                   py: 0.55,
                   textAlign: "center",
@@ -495,7 +495,7 @@ function PairInsightCard({ insight }: { insight: PairInsight }) {
                     fontSize: 15,
                     fontWeight: 800,
                     lineHeight: 1,
-                    color: isPerfect ? "#15803d" : "text.primary",
+                    color: isPerfect ? "#58664a" : "text.primary",
                   }}
                 >
                   {value}

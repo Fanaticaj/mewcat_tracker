@@ -113,11 +113,11 @@ export function PlannerHeader({
   return (
     <Card
       sx={{
-        borderRadius: 5,
-        border: "1px solid rgba(15, 23, 42, 0.08)",
+        borderRadius: 3,
+        border: "1px solid rgba(90, 67, 51, 0.1)",
         background:
-          "linear-gradient(135deg, rgba(255,255,255,0.98), rgba(244,247,255,0.98))",
-        boxShadow: "0 18px 42px rgba(15, 23, 42, 0.06)",
+          "linear-gradient(135deg, rgba(251,245,236,0.98), rgba(236,227,216,0.98))",
+        boxShadow: "0 18px 42px rgba(45, 35, 29, 0.08)",
       }}
     >
       <CardContent sx={{ p: { xs: 2, md: 2.5 } }}>
@@ -218,7 +218,7 @@ export function PlannerHeader({
             <Alert
               severity={plannerMessageTone}
               sx={{
-                borderRadius: 3,
+                borderRadius: 2,
                 py: 0,
                 "& .MuiAlert-message": { py: 0.85 },
               }}
@@ -330,9 +330,9 @@ export function PlannerHeader({
             <Box
               sx={{
                 mt: 0.25,
-                borderRadius: 4,
-                border: "1px solid rgba(148, 163, 184, 0.16)",
-                background: "rgba(255,255,255,0.86)",
+                borderRadius: 2.25,
+                border: "1px solid rgba(90, 67, 51, 0.14)",
+                background: "rgba(251,245,236,0.82)",
                 px: { xs: 1.25, md: 1.5 },
                 py: 1.5,
               }}

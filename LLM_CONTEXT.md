@@ -255,6 +255,7 @@ As of 2026-03-03, the planner supports:
 - room-level breeding insight panels
 - JSON room-plan export
 - JSON room-plan import
+- a warm Mewgenics-inspired visual theme based on parchment, ash, moss, clay, and charcoal tones
 - responsive card-based layout
 
 ## Recent major changes
@@ -282,6 +283,7 @@ Recent work completed after this file was created:
 12. Added JSON room-plan save/load so room information can live in a file.
 13. Added a local `.sav` decode flow in the web app that writes generated CSV files via
     `decompress.py` into `decoded_csv/`.
+14. Re-themed the planner UI to better match Mewgenics art direction with warmer earthy tones.
 
 ## Current coding conventions
 

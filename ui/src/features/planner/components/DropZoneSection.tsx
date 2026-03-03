@@ -92,16 +92,16 @@ export function DropZoneSection({
       onDragLeave={(event) => onDragLeave(event, dropId)}
       onDrop={(event) => onDrop(event, dropId)}
       sx={{
-        borderRadius: 5,
+        borderRadius: 3.25,
         border: isActiveDropZone
-          ? "1px solid rgba(63, 122, 224, 0.45)"
-          : "1px solid rgba(15, 23, 42, 0.08)",
+          ? "1px solid rgba(109, 120, 93, 0.42)"
+          : "1px solid rgba(90, 67, 51, 0.1)",
         background: isActiveDropZone
-          ? "linear-gradient(180deg, rgba(239,245,255,0.98), rgba(255,255,255,0.98))"
-          : "rgba(255,255,255,0.96)",
+          ? "linear-gradient(180deg, rgba(243,246,237,0.98), rgba(251,245,236,0.98))"
+          : "rgba(251,245,236,0.9)",
         boxShadow: isActiveDropZone
-          ? "0 20px 45px rgba(63, 122, 224, 0.14)"
-          : "0 12px 32px rgba(15, 23, 42, 0.06)",
+          ? "0 20px 45px rgba(80, 69, 56, 0.12)"
+          : "0 12px 32px rgba(45, 35, 29, 0.08)",
         transition:
           "border-color 180ms ease, box-shadow 180ms ease, background 180ms ease",
         ...sx,
@@ -192,14 +192,14 @@ export function DropZoneSection({
           {isActiveDropZone ? (
             <Box
               sx={{
-                borderRadius: 3,
-                border: "1px dashed rgba(63, 122, 224, 0.45)",
-                background: "rgba(63, 122, 224, 0.08)",
+                borderRadius: 2,
+                border: "1px dashed rgba(109, 120, 93, 0.45)",
+                background: "rgba(109, 120, 93, 0.09)",
                 px: 1.5,
                 py: 1,
               }}
             >
-              <Typography fontWeight={700} color="primary.main">
+              <Typography fontWeight={700} color="success.main">
                 Release to drop here
               </Typography>
             </Box>
@@ -216,8 +216,8 @@ export function DropZoneSection({
           {cats.length === 0 ? (
             <Box
               sx={{
-                borderRadius: 4,
-                border: "1px dashed rgba(15, 23, 42, 0.14)",
+                borderRadius: 2.5,
+                border: "1px dashed rgba(90, 67, 51, 0.18)",
                 px: 2,
                 py: 3,
                 textAlign: "center",

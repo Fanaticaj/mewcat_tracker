@@ -17,9 +17,9 @@ export function catStatSum(cat: CatRow) {
 }
 
 export function catAccent(cat: CatRow) {
-  if (cat.token_kind === "female") return "#d3547f";
-  if (cat.token_kind === "male") return "#3f7ae0";
-  return "#5b6475";
+  if (cat.token_kind === "female") return "#b97e76";
+  if (cat.token_kind === "male") return "#6d785d";
+  return "#8b7868";
 }
 
 export function averageStatSum(cats: CatRow[]) {
@@ -183,49 +183,49 @@ export function getPairTone(insight: PairInsight): PairTone {
   if (insight.complementaryPerfectStats.length >= 2) {
     return {
       label: "Prime complement",
-      accent: "#15803d",
+      accent: "#58664a",
       background:
-        "linear-gradient(180deg, rgba(240,253,244,0.96), rgba(220,252,231,0.9))",
-      border: "rgba(34, 197, 94, 0.22)",
+        "linear-gradient(180deg, rgba(239,244,232,0.97), rgba(224,232,214,0.92))",
+      border: "rgba(109, 120, 93, 0.24)",
     };
   }
 
   if (insight.complementaryPerfectStats.length === 1) {
     return {
       label: "Useful upgrade",
-      accent: "#0f766e",
+      accent: "#7b6b5b",
       background:
-        "linear-gradient(180deg, rgba(240,253,250,0.96), rgba(204,251,241,0.88))",
-      border: "rgba(20, 184, 166, 0.2)",
+        "linear-gradient(180deg, rgba(245,239,231,0.96), rgba(232,220,208,0.9))",
+      border: "rgba(139, 120, 104, 0.24)",
     };
   }
 
   if (insight.sharedPerfectStats.length > 0) {
     return {
       label: "Overlap risk",
-      accent: "#b45309",
+      accent: "#9a6b49",
       background:
-        "linear-gradient(180deg, rgba(255,251,235,0.96), rgba(254,243,199,0.9))",
-      border: "rgba(245, 158, 11, 0.22)",
+        "linear-gradient(180deg, rgba(251,242,231,0.96), rgba(239,219,197,0.9))",
+      border: "rgba(171, 123, 89, 0.24)",
     };
   }
 
   if (insight.strongStats.length >= 5) {
     return {
       label: "High floor",
-      accent: "#475569",
+      accent: "#5c5248",
       background:
-        "linear-gradient(180deg, rgba(248,250,252,0.98), rgba(241,245,249,0.94))",
-      border: "rgba(148, 163, 184, 0.22)",
+        "linear-gradient(180deg, rgba(246,241,235,0.98), rgba(235,227,217,0.94))",
+      border: "rgba(139, 120, 104, 0.22)",
     };
   }
 
   return {
     label: "Needs help",
-    accent: "#7c3aed",
+    accent: "#7a5d4c",
     background:
-      "linear-gradient(180deg, rgba(250,245,255,0.96), rgba(243,232,255,0.9))",
-    border: "rgba(168, 85, 247, 0.2)",
+      "linear-gradient(180deg, rgba(244,235,226,0.96), rgba(228,214,201,0.9))",
+    border: "rgba(171, 123, 89, 0.2)",
   };
 }
 
