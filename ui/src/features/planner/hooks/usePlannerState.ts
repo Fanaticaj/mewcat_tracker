@@ -1,16 +1,46 @@
 import { useEffect, useMemo, useState } from "react";
 import type { DragEvent } from "react";
 import Papa from "papaparse";
-import { DEFAULT_ROOM_NAMES } from "../constants";
-import { loadEligibility, loadRooms, saveEligibility, saveRooms } from "../storage";
+import {
+  loadEligibility,
+  loadRoomNames,
+  loadRooms,
+  saveEligibility,
+  saveRoomNames,
+  saveRooms,
+} from "../storage";
 import type {
   CatRow,
   DragState,
   EligibilityState,
   RoomDestination,
   RoomsState,
+  SortDirection,
+  SortField,
+  StatFilterState,
 } from "../types";
-import { buildAutoAssignedRooms } from "../utils";
+import {
+  buildAutoAssignedRooms,
+  buildPlannerRoomFile,
+  createDefaultStatFilters,
+  doesCatMatchStatFilters,
+  parsePlannerRoomFile,
+  sanitizeRooms,
+  sortCats,
+} from "../utils";
+
+function downloadRoomPlanFile(contents: string) {
+  const blob = new Blob([contents], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  const stamp = new Date().toISOString().slice(0, 10);
+
+  anchor.href = url;
+  anchor.download = `mew-room-plan-${stamp}.json`;
+  anchor.click();
+
+  URL.revokeObjectURL(url);
+}
 
 export function usePlannerState() {
   const [cats, setCats] = useState<CatRow[]>([]);
@@ -18,19 +48,34 @@ export function usePlannerState() {
   const [eligibility, setEligibility] = useState<EligibilityState>(() =>
     loadEligibility(),
   );
-  const [roomNames, setRoomNames] = useState<string[]>(DEFAULT_ROOM_NAMES);
+  const [roomNames, setRoomNames] = useState<string[]>(() => loadRoomNames());
   const [newRoomName, setNewRoomName] = useState("");
   const [search, setSearch] = useState("");
   const [genderFilter, setGenderFilter] = useState("all");
+  const [sortField, setSortField] = useState<SortField>("name");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [statFilters, setStatFilters] = useState<StatFilterState>(
+    createDefaultStatFilters,
+  );
+  const [plannerMessage, setPlannerMessage] = useState("");
+  const [plannerMessageTone, setPlannerMessageTone] = useState<
+    "info" | "success" | "error"
+  >("info");
   const [dragState, setDragState] = useState<DragState>(null);
   const [activeDropZone, setActiveDropZone] = useState<RoomDestination | null>(null);
 
   useEffect(() => saveRooms(rooms), [rooms]);
   useEffect(() => saveEligibility(eligibility), [eligibility]);
+  useEffect(() => saveRoomNames(roomNames), [roomNames]);
 
   const validCats = useMemo(
     () => cats.filter((cat) => !(cat.error && cat.error.length > 0)),
     [cats],
+  );
+
+  const validCatKeys = useMemo(
+    () => new Set(validCats.map((cat) => cat.key)),
+    [validCats],
   );
 
   const catsByKey = useMemo(() => {
@@ -47,19 +92,21 @@ export function usePlannerState() {
     const assigned = new Set<string>();
 
     for (const keys of Object.values(rooms)) {
-      keys.forEach((key) => assigned.add(key));
+      keys.forEach((key) => {
+        if (validCatKeys.has(key)) assigned.add(key);
+      });
     }
 
     return assigned;
-  }, [rooms]);
+  }, [rooms, validCatKeys]);
 
   const isCatEligible = (catKey: string) => eligibility[catKey] ?? true;
 
   const filteredCats = useMemo(() => {
     const query = search.trim().toLowerCase();
-
-    return validCats.filter((cat) => {
+    const visible = validCats.filter((cat) => {
       if (genderFilter !== "all" && cat.token_kind !== genderFilter) return false;
+      if (!doesCatMatchStatFilters(cat, statFilters)) return false;
       if (!query) return true;
 
       return (
@@ -68,7 +115,9 @@ export function usePlannerState() {
         cat.token.toLowerCase().includes(query)
       );
     });
-  }, [genderFilter, search, validCats]);
+
+    return sortCats(visible, sortField, sortDirection);
+  }, [genderFilter, search, sortDirection, sortField, statFilters, validCats]);
 
   const filteredCatKeys = useMemo(
     () => new Set(filteredCats.map((cat) => cat.key)),
@@ -81,7 +130,10 @@ export function usePlannerState() {
   );
 
   const eligibleUnassignedCats = useMemo(
-    () => validCats.filter((cat) => !assignedKeys.has(cat.key) && isCatEligible(cat.key)),
+    () =>
+      validCats.filter(
+        (cat) => !assignedKeys.has(cat.key) && (eligibility[cat.key] ?? true),
+      ),
     [assignedKeys, eligibility, validCats],
   );
 
@@ -105,10 +157,15 @@ export function usePlannerState() {
             (cat): cat is CatRow => cat !== undefined && filteredCatKeys.has(cat.key),
           );
 
-        return [roomName, shown];
+        return [roomName, sortCats(shown, sortField, sortDirection)];
       }),
     ) as Record<string, CatRow[]>;
-  }, [catsByKey, filteredCatKeys, roomNames, rooms]);
+  }, [catsByKey, filteredCatKeys, roomNames, rooms, sortDirection, sortField]);
+
+  function setNotice(message: string, tone: "info" | "success" | "error") {
+    setPlannerMessage(message);
+    setPlannerMessageTone(tone);
+  }
 
   function importCsv(file: File) {
     Papa.parse<CatRow>(file, {
@@ -116,16 +173,67 @@ export function usePlannerState() {
       skipEmptyLines: true,
       complete: (result) => {
         setCats(result.data.filter((row) => row.key));
+        setNotice(`Loaded ${file.name}.`, "success");
       },
     });
   }
 
   function addRoom() {
     const name = newRoomName.trim();
-    if (!name || roomNames.includes(name)) return;
+    if (!name) return;
+    if (roomNames.some((roomName) => roomName.toLowerCase() === name.toLowerCase())) {
+      return;
+    }
 
     setRoomNames((current) => [...current, name]);
+    setRooms((current) => ({ ...current, [name]: current[name] ?? [] }));
     setNewRoomName("");
+    setNotice(`Added ${name}.`, "success");
+  }
+
+  function renameRoom(currentName: string, nextName: string) {
+    const trimmedName = nextName.trim();
+    if (!trimmedName) return;
+
+    const hasConflict = roomNames.some(
+      (roomName) =>
+        roomName !== currentName && roomName.toLowerCase() === trimmedName.toLowerCase(),
+    );
+
+    if (hasConflict) return;
+
+    setRoomNames((current) =>
+      current.map((roomName) => (roomName === currentName ? trimmedName : roomName)),
+    );
+    setRooms((current) => {
+      const nextRooms: RoomsState = {};
+
+      for (const roomName of Object.keys(current)) {
+        if (roomName === currentName) continue;
+        nextRooms[roomName] = current[roomName];
+      }
+
+      nextRooms[trimmedName] = current[currentName] ?? [];
+      return sanitizeRooms(
+        roomNames.map((roomName) => (roomName === currentName ? trimmedName : roomName)),
+        nextRooms,
+      );
+    });
+    setNotice(`Renamed ${currentName} to ${trimmedName}.`, "success");
+  }
+
+  function removeRoom(roomName: string) {
+    setRoomNames((current) => current.filter((name) => name !== roomName));
+    setRooms((current) => {
+      const nextRooms: RoomsState = {};
+
+      for (const name of Object.keys(current)) {
+        if (name !== roomName) nextRooms[name] = current[name];
+      }
+
+      return nextRooms;
+    });
+    setNotice(`Removed ${roomName}. Its cats are now unassigned.`, "info");
   }
 
   function moveCatToRoom(catKey: string, destination: RoomDestination) {
@@ -150,7 +258,8 @@ export function usePlannerState() {
   }
 
   function clearAllRooms() {
-    setRooms({});
+    setRooms(sanitizeRooms(roomNames, {}));
+    setNotice("Cleared all room assignments.", "info");
   }
 
   function toggleCatEligibility(catKey: string) {
@@ -171,6 +280,47 @@ export function usePlannerState() {
         roomNames,
       }),
     );
+    setNotice("Assigned eligible unassigned cats to the strongest available rooms.", "success");
+  }
+
+  async function importRoomFile(file: File) {
+    try {
+      const parsed = parsePlannerRoomFile(await file.text());
+      setRoomNames(parsed.roomNames);
+      setRooms(parsed.rooms);
+      setEligibility(parsed.eligibility);
+      setNotice(`Loaded room plan from ${file.name}.`, "success");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to read that room file.";
+      setNotice(message, "error");
+    }
+  }
+
+  function exportRoomFile() {
+    const roomFile = buildPlannerRoomFile({
+      eligibility,
+      roomNames,
+      rooms,
+    });
+
+    downloadRoomPlanFile(JSON.stringify(roomFile, null, 2));
+    setNotice("Downloaded the current room plan as JSON.", "success");
+  }
+
+  function updateStatFilter(stat: keyof StatFilterState, value: string) {
+    const digit = value.replace(/[^0-9]/g, "").slice(0, 1);
+    const cleaned =
+      digit.length === 0 ? "" : String(Math.max(0, Math.min(7, Number(digit))));
+
+    setStatFilters((current) => ({
+      ...current,
+      [stat]: cleaned,
+    }));
+  }
+
+  function resetStatFilters() {
+    setStatFilters(createDefaultStatFilters());
   }
 
   function handleDragStart(
@@ -242,6 +392,7 @@ export function usePlannerState() {
     clearAllRooms,
     dragState,
     eligibleUnassignedCount: eligibleUnassignedCats.length,
+    exportRoomFile,
     filteredCats,
     genderFilter,
     handleDragEnd,
@@ -250,17 +401,29 @@ export function usePlannerState() {
     handleDragStart,
     handleDrop,
     importCsv,
+    importRoomFile,
     moveCatToRoom,
     newRoomName,
+    plannerMessage,
+    plannerMessageTone,
+    removeRoom,
+    renameRoom,
+    resetStatFilters,
     roomNames,
     search,
     setGenderFilter,
     setNewRoomName,
     setSearch,
+    setSortDirection,
+    setSortField,
+    sortDirection,
+    sortField,
+    statFilters,
     toggleCatEligibility,
     tokenKinds,
     totalValidCats: validCats.length,
     unassigned,
+    updateStatFilter,
     visibleRoomCats,
     wasCatMarkedEligible: isCatEligible,
   };

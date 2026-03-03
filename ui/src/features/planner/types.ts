@@ -23,6 +23,12 @@ export type EligibilityState = Record<string, boolean>;
 
 export type RoomDestination = string | "unassigned";
 
+export type SortField = "name" | "total" | StatKey;
+
+export type SortDirection = "asc" | "desc";
+
+export type StatFilterState = Record<StatKey, string>;
+
 export type DragState = {
   catKey: string;
   fromRoom: RoomDestination;
@@ -55,4 +61,12 @@ export type PairTone = {
   accent: string;
   background: string;
   border: string;
+};
+
+export type PlannerRoomFile = {
+  version: 1;
+  savedAt: string;
+  roomNames: string[];
+  rooms: RoomsState;
+  eligibility: EligibilityState;
 };

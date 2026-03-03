@@ -1,10 +1,14 @@
 import { STAT_KEYS } from "./constants";
 import type {
   CatRow,
+  PlannerRoomFile,
   PairInsight,
   PairTone,
   RoomsState,
   RoomStatLeader,
+  SortDirection,
+  SortField,
+  StatFilterState,
   StatKey,
 } from "./types";
 
@@ -27,6 +31,49 @@ export function averageStatSum(cats: CatRow[]) {
 
 export function getStatValue(cat: CatRow, stat: StatKey) {
   return Number(cat[stat]) || 0;
+}
+
+export function createDefaultStatFilters() {
+  return Object.fromEntries(STAT_KEYS.map((stat) => [stat, ""])) as StatFilterState;
+}
+
+export function doesCatMatchStatFilters(cat: CatRow, statFilters: StatFilterState) {
+  return STAT_KEYS.every((stat) => {
+    const minimum = Number(statFilters[stat]);
+    if (!Number.isFinite(minimum) || statFilters[stat].trim() === "") return true;
+    return getStatValue(cat, stat) >= minimum;
+  });
+}
+
+export function sortCats(
+  cats: CatRow[],
+  sortField: SortField,
+  sortDirection: SortDirection,
+) {
+  return [...cats].sort((left, right) => {
+    const directionMultiplier = sortDirection === "asc" ? 1 : -1;
+
+    if (sortField === "name") {
+      return (
+        left.name.localeCompare(right.name, undefined, { sensitivity: "base" }) *
+        directionMultiplier
+      );
+    }
+
+    const leftValue =
+      sortField === "total" ? catStatSum(left) : getStatValue(left, sortField);
+    const rightValue =
+      sortField === "total" ? catStatSum(right) : getStatValue(right, sortField);
+
+    if (leftValue !== rightValue) {
+      return (leftValue - rightValue) * directionMultiplier;
+    }
+
+    return (
+      left.name.localeCompare(right.name, undefined, { sensitivity: "base" }) *
+      directionMultiplier
+    );
+  });
 }
 
 export function getPerfectStats(cat: CatRow) {
@@ -388,4 +435,70 @@ export function buildAutoAssignedRooms({
   }
 
   return nextRooms;
+}
+
+export function sanitizeRooms(roomNames: string[], rooms: RoomsState) {
+  return Object.fromEntries(
+    roomNames.map((roomName) => [roomName, [...(rooms[roomName] ?? [])]]),
+  ) as RoomsState;
+}
+
+export function buildPlannerRoomFile({
+  eligibility,
+  roomNames,
+  rooms,
+}: {
+  eligibility: Record<string, boolean>;
+  roomNames: string[];
+  rooms: RoomsState;
+}): PlannerRoomFile {
+  return {
+    version: 1,
+    savedAt: new Date().toISOString(),
+    roomNames,
+    rooms: sanitizeRooms(roomNames, rooms),
+    eligibility,
+  };
+}
+
+export function parsePlannerRoomFile(raw: string): PlannerRoomFile {
+  const parsed = JSON.parse(raw) as Partial<PlannerRoomFile>;
+
+  if (parsed.version !== 1) {
+    throw new Error("Unsupported room file version.");
+  }
+
+  if (
+    !Array.isArray(parsed.roomNames) ||
+    !parsed.roomNames.every((name) => typeof name === "string" && name.trim().length > 0)
+  ) {
+    throw new Error("Room file is missing valid room names.");
+  }
+
+  if (!parsed.rooms || typeof parsed.rooms !== "object") {
+    throw new Error("Room file is missing room assignments.");
+  }
+
+  const sanitizedRoomNames = parsed.roomNames.map((name) => name.trim());
+  const sanitizedRooms = sanitizeRooms(
+    sanitizedRoomNames,
+    parsed.rooms as RoomsState,
+  );
+  const sanitizedEligibility =
+    parsed.eligibility && typeof parsed.eligibility === "object"
+      ? Object.fromEntries(
+          Object.entries(parsed.eligibility).filter(
+            (entry): entry is [string, boolean] => typeof entry[1] === "boolean",
+          ),
+        )
+      : {};
+
+  return {
+    version: 1,
+    savedAt:
+      typeof parsed.savedAt === "string" ? parsed.savedAt : new Date().toISOString(),
+    roomNames: sanitizedRoomNames,
+    rooms: sanitizedRooms,
+    eligibility: sanitizedEligibility,
+  };
 }

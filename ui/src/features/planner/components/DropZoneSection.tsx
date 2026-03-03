@@ -1,6 +1,20 @@
+import { useState } from "react";
 import type { DragEvent } from "react";
+import DeleteOutlineRounded from "@mui/icons-material/DeleteOutlineRounded";
+import DriveFileRenameOutlineRounded from "@mui/icons-material/DriveFileRenameOutlineRounded";
 import type { SxProps, Theme } from "@mui/material/styles";
-import { Box, Card, CardContent, Chip, Stack, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  IconButton,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import type { CatRow, RoomDestination } from "../types";
 import { buildRoomPairInsights, buildRoomStatLeaders } from "../utils";
 import { CatCard } from "./CatCard";
@@ -26,6 +40,8 @@ type DropZoneSectionProps = {
   ) => void;
   onDrop: (event: DragEvent<HTMLElement>, destination: RoomDestination) => void;
   onMove: (key: string, destination: RoomDestination) => void;
+  onRemoveRoom?: (roomName: string) => void;
+  onRenameRoom?: (roomName: string, nextName: string) => void;
   onToggleEligibility: (key: string) => void;
   roomNames: string[];
   subtitle: string;
@@ -49,6 +65,8 @@ export function DropZoneSection({
   onDragStart,
   onDrop,
   onMove,
+  onRemoveRoom,
+  onRenameRoom,
   onToggleEligibility,
   roomNames,
   subtitle,
@@ -56,9 +74,17 @@ export function DropZoneSection({
   title,
 }: DropZoneSectionProps) {
   const isRoomSection = dropId !== "unassigned";
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [draftName, setDraftName] = useState(title);
   const roomStatLeaders = isRoomSection ? buildRoomStatLeaders(cats) : [];
   const topPairInsights =
     isRoomSection && cats.length >= 2 ? buildRoomPairInsights(cats).slice(0, 3) : [];
+
+  function saveName() {
+    if (!onRenameRoom || !isRoomSection) return;
+    onRenameRoom(title, draftName);
+    setIsEditingName(false);
+  }
 
   return (
     <Card
@@ -89,11 +115,72 @@ export function DropZoneSection({
             alignItems={{ xs: "flex-start", sm: "center" }}
             spacing={1}
           >
-            <Box>
-              <Typography variant="h5" fontWeight={800}>
-                {title}
-              </Typography>
+            <Box sx={{ minWidth: 0, width: "100%" }}>
+              <Stack
+                direction={{ xs: "column", md: "row" }}
+                spacing={1}
+                alignItems={{ xs: "flex-start", md: "center" }}
+              >
+                <Typography variant="h5" fontWeight={800}>
+                  {title}
+                </Typography>
+
+                {isRoomSection ? (
+                  <Stack direction="row" spacing={0.5}>
+                    <Tooltip title="Rename room">
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          setDraftName(title);
+                          setIsEditingName(true);
+                        }}
+                      >
+                        <DriveFileRenameOutlineRounded fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Remove room">
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => onRemoveRoom?.(title)}
+                      >
+                        <DeleteOutlineRounded fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Stack>
+                ) : null}
+              </Stack>
+
               <Typography color="text.secondary">{subtitle}</Typography>
+
+              {isRoomSection && isEditingName ? (
+                <Stack
+                  direction={{ xs: "column", md: "row" }}
+                  spacing={1}
+                  sx={{ mt: 1.25, maxWidth: 460 }}
+                >
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Room name"
+                    value={draftName}
+                    onChange={(event) => setDraftName(event.target.value)}
+                  />
+                  <Button variant="contained" size="small" onClick={saveName}>
+                    Save
+                  </Button>
+                  <Button
+                    variant="text"
+                    size="small"
+                    onClick={() => {
+                      setDraftName(title);
+                      setIsEditingName(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </Stack>
+              ) : null}
             </Box>
 
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>

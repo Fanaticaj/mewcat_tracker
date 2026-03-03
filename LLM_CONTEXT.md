@@ -2,31 +2,26 @@
 
 ## Why this file exists
 
-This file is a lightweight project memory for LLM-assisted work on `mewcat_tracker`.
+This file is persistent project memory for LLM-assisted work on `mewcat_tracker`.
 
-The goal is to give future sessions a reliable starting point even when prior chat context is gone. It should help an LLM quickly understand:
+It exists so a future session can quickly recover the purpose, structure, constraints,
+and recent feature history of the project even when prior chat context is gone.
 
-- what this project is for
-- what it is not for
-- how the codebase is organized
-- which technologies are in use
-- what major features already exist
-- what constraints and caveats matter before making changes
-
-This file is not the source of truth over the code. If this file and the code disagree, trust the code and update this file.
+This file is not more authoritative than the code. If this file and the code disagree,
+trust the code and update this file.
 
 ## How to use this file
 
-Read this file before proposing architecture changes, UI changes, parsing changes, or breeding-logic changes.
+Read this file before making architecture, UI, planner, parsing, or persistence changes.
 
 Use it as:
 
 - project orientation
-- a memory aid for long-running work
-- a checklist for what should be preserved
-- a summary of important domain intent and non-goals
+- a short-term memory aid for long-running work
+- a reminder of product intent and non-goals
+- a checklist of important behaviors that should not be regressed
 
-After any meaningful project change, update this file so future sessions inherit the latest state.
+After any meaningful project change, update this file.
 
 ## Maintenance rule
 
@@ -34,52 +29,58 @@ Update this file when any of the following changes:
 
 - project goals or non-goals
 - user workflow
-- architecture or folder structure
-- core technologies or package choices
-- breeding analysis logic
-- data import pipeline
+- folder structure or architecture
+- core technologies
+- breeding-analysis logic
+- import/export or persistence behavior
 - major UI features
 - known limitations or assumptions
 
-Prefer editing existing sections instead of appending unstructured notes.
+Prefer updating existing sections instead of appending loose notes.
 
 ## Project summary
 
 `mewcat_tracker` is a companion management tool for the game **Mewgenics**.
 
-It is meant to run alongside the game and help users make faster, better breeding decisions by surfacing useful information about their cats. The focus is planning, insight, and min-maxing support.
+It is intended to run alongside the game and help players make faster, better breeding
+decisions by surfacing useful information about their cats.
 
-This project is **not** meant to modify save data, alter cats, inject cheats, or automate gameplay. It is a planning and analysis layer, not a game-modification tool.
+This project is **not** intended to modify save data, alter cats, inject cheats, or
+automate gameplay. It is a planning and analysis tool only.
 
 ## Product goal
 
-The current product goal is:
+Current product goal:
 
-> Help players quickly understand which cats and room pairings create the best breeding outcomes, while reducing the manual planning burden required to min-max stat inheritance.
+> Help players quickly understand which cats and room pairings create the best breeding
+> outcomes while reducing the manual planning burden required to min-max stat inheritance.
 
-In practical terms, the UI should help answer questions like:
+In practice, the UI should help answer questions like:
 
-- Which room pairing has the strongest stat complement?
-- Which cats overlap too much to be worth breeding together?
-- Which cats uniquely contribute perfect 7s?
-- Which rooms have the best ceiling for specific stats?
+- Which cats complement each other instead of overlapping on the same perfect 7s?
+- Which room has the strongest next breeding pair?
+- Which cats should be grouped first when many are still unassigned?
+- Which cats should be excluded from automated planning because they are not eligible?
 
 ## Current user workflow
 
-Current workflow is:
+Current workflow:
 
-1. Decode cat data from a Mewgenics save using `decompress.py` or use an existing CSV.
-2. Import the CSV into the browser UI.
-3. Drag cats into rooms or use quick-move dropdowns.
-4. Review room-level breeding insights to decide which pairings are strongest.
+1. Decode cat data from a Mewgenics save with `decompress.py` or use an existing CSV.
+2. Import the CSV into the browser planner.
+3. Filter and sort the roster to inspect specific stat floors or rankings.
+4. Drag cats into rooms, quick-move them, or use auto-assign for eligible unassigned cats.
+5. Review room-level breeding insights to decide which pairings are strongest.
+6. Save the room plan to a JSON file when the layout should persist outside the browser.
 
-The app currently supports planning and comparison. It does not write results back into the game.
+The app currently supports planning and comparison only. It does not write results back
+into the game.
 
 ## High-level architecture
 
-There are currently two major parts:
+There are two main parts:
 
-### 1. Save/CSV tooling at repo root
+### 1. Save and CSV tooling at repo root
 
 - `decompress.py`
   - Python script for decoding Mewgenics cat data from a `.sav` SQLite database
@@ -91,45 +92,45 @@ There are currently two major parts:
 
 - Vite + React + TypeScript single-page app
 - imports CSV data
-- organizes cats into rooms
-- analyzes room pairings and stat ceilings
-- stores room assignments in browser local storage
+- manages rooms and breeding analysis
+- supports sorting, filtering, drag-drop, auto-assign, and room-plan file export/import
 
 ## Current folder structure
 
-Only the meaningful project files are listed here. Ignore generated folders like `node_modules/` and `ui/dist/`.
+Only meaningful project files are listed here. Ignore generated folders like
+`node_modules/` and `ui/dist/`.
 
 ```text
 mewcat_tracker/
-├─ LLM_CONTEXT.md
-├─ decompress.py
-├─ cats.csv
-├─ curr_cats.csv
-├─ steamcampaign01.sav
-├─ package.json
-└─ ui/
-   ├─ package.json
-   ├─ vite.config.ts
-   ├─ tsconfig.json
-   ├─ eslint.config.js
-   └─ src/
-      ├─ App.tsx
-      ├─ main.tsx
-      ├─ index.css
-      └─ features/
-         └─ planner/
-            ├─ constants.ts
-            ├─ storage.ts
-            ├─ styles.ts
-            ├─ types.ts
-            ├─ utils.ts
-            ├─ hooks/
-            │  └─ usePlannerState.ts
-            └─ components/
-               ├─ PlannerHeader.tsx
-               ├─ DropZoneSection.tsx
-               ├─ RoomInsights.tsx
-               └─ CatCard.tsx
+|- LLM_CONTEXT.md
+|- decompress.py
+|- cats.csv
+|- curr_cats.csv
+|- steamcampaign01.sav
+|- package.json
+`- ui/
+   |- package.json
+   |- vite.config.ts
+   |- tsconfig.json
+   |- eslint.config.js
+   `- src/
+      |- App.tsx
+      |- main.tsx
+      |- index.css
+      `- features/
+         `- planner/
+            |- constants.ts
+            |- storage.ts
+            |- styles.ts
+            |- types.ts
+            |- utils.ts
+            |- hooks/
+            |  `- usePlannerState.ts
+            `- components/
+               |- PlannerHeader.tsx
+               |- DropZoneSection.tsx
+               |- RoomInsights.tsx
+               `- CatCard.tsx
 ```
 
 ## Technologies in use
@@ -147,18 +148,18 @@ mewcat_tracker/
 ### Tooling
 
 - ESLint
-- Playwright MCP is used externally for manual UI verification during development
+- Playwright MCP for manual browser verification during development
 
 ### Python tooling
 
-- Python 3.11 is available in the local environment
-- `decompress.py` uses the Python standard library only in the inspected sections seen during audit
+- Python 3.11 is available locally
+- `decompress.py` uses Python tooling at repo root and is separate from the browser app
 
 ## Important implementation details
 
 ### Data source
 
-The UI expects cat data from CSV import.
+The planner expects cat data from CSV import.
 
 Important columns include:
 
@@ -180,22 +181,36 @@ Rows with a populated `error` field are treated as invalid in the planner UI.
 
 ### Persistence
 
-The frontend currently persists **room assignments** in browser local storage using:
+There are now two persistence layers:
+
+1. Browser local storage for convenience
+2. JSON room-plan files for explicit save/load outside the browser
+
+Current local storage keys:
 
 - `mew_rooms_v1`
+- `mew_room_names_v1`
 - `mew_auto_assign_eligibility_v1`
 
-Current limitations:
+Current room-plan JSON file contents:
 
-- imported CSV data is **not** persisted across reloads
-- room names are **not** persisted across reloads
-- search/filter state is **not** persisted across reloads
+- `version`
+- `savedAt`
+- `roomNames`
+- `rooms`
+- `eligibility`
 
-This matters for future changes. Do not assume the planner is fully stateful across sessions.
+Important nuance:
+
+- imported CSV data is still **not** persisted across reloads
+- room names and assignments **are** persisted in local storage
+- room plans can now be saved and loaded from a JSON file
+- search, sort, and filter UI state are still session-only
 
 ### Breeding analysis model
 
-Current breeding analysis is heuristic-based, not a reverse-engineered exact game simulation.
+Current breeding analysis is heuristic-based, not a reverse-engineered exact game
+simulation.
 
 The planner currently computes:
 
@@ -209,12 +224,11 @@ The planner currently computes:
 - ranked pair recommendations
 - heuristic room auto-assignment for eligible unassigned cats
 
-Important nuance:
+Important ranking nuance:
 
-- a pair with complementary perfect 7s is ranked above a pair that only shares the same perfect 7s
-- the auto-assigner is heuristic and greedy; it favors completing strong pairs, seeding empty rooms with strong remaining pairs, then placing leftover cats where they most improve room quality
-
-This matches the product goal of helping users maximize stat transfer potential rather than just grouping already-similar cats together.
+- complementary perfect 7 coverage is favored over overlapping perfect 7s
+- the auto-assigner is greedy and heuristic-based, not a guaranteed global optimum
+- adding more cats to a room is penalized once the room gets crowded
 
 ## Current UI capabilities
 
@@ -222,60 +236,70 @@ As of 2026-03-03, the planner supports:
 
 - CSV import
 - search by name, key, or token
-- gender/type filter
+- gender/type filtering
+- stat floor filtering with per-stat minimum values
+- sorting by name, total stats, or any individual stat
 - manual room creation
+- room renaming
+- room removal, allowing fewer than 3 rooms or even zero rooms
 - drag-and-drop room assignment
 - quick-move dropdown fallback
-- per-card eligibility toggle for auto-assignment
+- per-card eligibility toggle for auto-assign
 - auto-assign button for eligible unassigned cats
-- room-level breeding insight panel
-- “Best next pair” highlight per room
-- room stat leader summary
-- alternative pair comparison cards
-- responsive layout improvements for smaller screens
+- room-level breeding insight panels
+- JSON room-plan export
+- JSON room-plan import
+- responsive card-based layout
 
 ## Recent major changes
 
-Recent work completed before this file was created:
+Recent work completed before this file existed:
 
 1. Replaced the old horizontal-scroll assignment table with draggable cat cards.
 2. Redesigned cat cards to be denser, cleaner, and more legible.
-3. Added room breeding analysis that surfaces:
-   - best pair in a room
-   - unique vs shared perfect 7 contributions
-   - room stat leaders
-   - kitten stat ceiling summaries
-4. Refactored the UI out of a monolithic `App.tsx` into feature-based modules under `ui/src/features/planner/`.
+3. Added room breeding analysis that surfaces best pairs, unique versus shared perfect
+   7 contributions, room stat leaders, and kitten ceiling summaries.
+4. Refactored the UI out of a monolithic `App.tsx` into feature-based modules under
+   `ui/src/features/planner/`.
 5. Removed unused starter `App.css`.
 
 Recent work completed after this file was created:
 
-6. Added persistent per-cat eligibility toggles so users can exclude cats from automated planning when they are too young or otherwise unsuitable.
-7. Added an auto-assign action that distributes eligible unassigned cats into existing rooms using the current breeding heuristic.
+6. Added persistent per-cat eligibility toggles so users can exclude cats from
+   automated planning.
+7. Added auto-assign for eligible unassigned cats using the current breeding heuristic.
+8. Added sorting by name, total stats, and individual stats.
+9. Added stat floor filters.
+10. Added persistent room names in local storage.
+11. Added room rename and delete controls so the planner is no longer locked to three
+    rooms.
+12. Added JSON room-plan save/load so room information can live in a file.
 
 ## Current coding conventions
 
 Observed and intended conventions:
 
 - keep `App.tsx` thin and composition-focused
-- put planner-specific logic under `ui/src/features/planner/`
-- keep pure calculation logic in `utils.ts`
+- keep planner-specific code under `ui/src/features/planner/`
+- keep pure scoring and transformation logic in `utils.ts`
 - keep browser persistence in `storage.ts`
-- keep UI-only style objects in `styles.ts`
-- use Material UI `sx` styling for component-local presentation
-- prefer small focused components over one giant screen file
+- keep MUI `sx` styling near the relevant component
+- prefer focused components over large multi-purpose screen files
 
-Comments should be minimal and only used where the code would otherwise be unclear.
+Comments should remain minimal and only explain non-obvious logic.
 
 ## Known limitations and caveats
 
 - No automated test suite exists yet.
-- Playwright validation has been manual via MCP rather than committed test files.
-- `ui/README.md` is still the default Vite template and should not be treated as project-specific documentation.
-- The room analysis is heuristic guidance, not a guaranteed exact reproduction of in-game breeding rules.
-- The auto-assign feature is also heuristic guidance, not a guaranteed optimal global solution.
-- Root-level `.gitignore` ignores `*.csv` and `*.sav`, even though sample files are currently present locally.
-- The root `package.json` is minimal and only contains `@types/papaparse`; most frontend work should happen inside `ui/`.
+- Playwright verification is still manual via MCP rather than committed browser tests.
+- `ui/README.md` is still the default Vite template and should not be treated as
+  project-specific documentation.
+- Breeding analysis is heuristic guidance, not guaranteed in-game breeding simulation.
+- Auto-assign is heuristic guidance, not a proven optimal global assignment solver.
+- CSV import is session-only; a reload still requires re-importing cat data.
+- Root-level `.gitignore` ignores `*.csv` and `*.sav`, even though sample files may be
+  present locally.
+- The root `package.json` is minimal; most frontend work should happen inside `ui/`.
 
 ## Commands worth remembering
 
@@ -299,22 +323,24 @@ python decompress.py --help
 Before making changes:
 
 - read this file
-- inspect the actual feature files under `ui/src/features/planner/`
-- preserve the project’s non-cheat positioning
-- avoid regressing the room breeding insight workflow
-- validate responsive behavior if the UI layout changes
+- inspect the actual planner modules under `ui/src/features/planner/`
+- preserve the non-cheat positioning of the product
+- avoid regressing the breeding-insight workflow
+- recheck responsive behavior if the layout changes
+- update this file after meaningful planner, persistence, or workflow changes
 
-When adding new features, ask:
+When adding features, ask:
 
-- does this help the player plan breeding faster?
-- does this surface actionable cat insight?
-- does this preserve the “companion tool” rather than “game modification” boundary?
+- does this reduce planning time?
+- does this surface actionable breeding insight?
+- does this stay on the companion-tool side of the line instead of game modification?
 
 ## Update log
 
 ### 2026-03-03
 
 - Created this file as persistent project memory for future LLM-assisted work.
-- Documented current architecture after the planner refactor.
-- Documented current product goal, tech stack, workflow, limitations, and recent features.
-- Updated the file after adding the eligibility toggle and auto-assign feature for unassigned cats.
+- Documented the planner refactor, current tech stack, workflow, and limitations.
+- Documented the eligibility toggle and auto-assign features.
+- Updated the file after adding sorting, stat filtering, persistent room names, room
+  rename/delete controls, and JSON room-plan save/load.

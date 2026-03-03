@@ -14,6 +14,7 @@ export default function App() {
     clearAllRooms,
     dragState,
     eligibleUnassignedCount,
+    exportRoomFile,
     filteredCats,
     genderFilter,
     handleDragEnd,
@@ -22,17 +23,29 @@ export default function App() {
     handleDragStart,
     handleDrop,
     importCsv,
+    importRoomFile,
     moveCatToRoom,
     newRoomName,
+    plannerMessage,
+    plannerMessageTone,
+    removeRoom,
+    renameRoom,
+    resetStatFilters,
     roomNames,
     search,
     setGenderFilter,
     setNewRoomName,
     setSearch,
+    setSortDirection,
+    setSortField,
+    sortDirection,
+    sortField,
+    statFilters,
     toggleCatEligibility,
     tokenKinds,
     totalValidCats,
     unassigned,
+    updateStatFilter,
     visibleRoomCats,
     wasCatMarkedEligible,
   } = usePlannerState();
@@ -49,12 +62,23 @@ export default function App() {
           onAddRoom={addRoom}
           onAutoAssignEligibleCats={autoAssignEligibleCats}
           onClearAllRooms={clearAllRooms}
+          onExportRoomFile={exportRoomFile}
           onGenderFilterChange={setGenderFilter}
           onImportCsv={importCsv}
+          onImportRoomFile={importRoomFile}
           onNewRoomNameChange={setNewRoomName}
+          onResetStatFilters={resetStatFilters}
           onSearchChange={setSearch}
+          onSortDirectionChange={setSortDirection}
+          onSortFieldChange={setSortField}
+          onStatFilterChange={updateStatFilter}
+          plannerMessage={plannerMessage}
+          plannerMessageTone={plannerMessageTone}
           roomCount={roomNames.length}
           search={search}
+          sortDirection={sortDirection}
+          sortField={sortField}
+          statFilters={statFilters}
           tokenKinds={tokenKinds}
           totalValidCats={totalValidCats}
         />
@@ -105,6 +129,8 @@ export default function App() {
                 roomNames={roomNames}
                 getRoomForCat={() => roomName}
                 onMove={moveCatToRoom}
+                onRemoveRoom={removeRoom}
+                onRenameRoom={renameRoom}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
                 onDragOver={handleDragOver}
