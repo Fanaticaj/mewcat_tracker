@@ -61,6 +61,7 @@ In practice, the UI should help answer questions like:
 - Which room has the strongest next breeding pair?
 - Which cats should be grouped first when many are still unassigned?
 - Which cats should be excluded from automated planning because they are not eligible?
+- Which cats are still active versus historical `Gone` cats still present in the save?
 
 ## Current user workflow
 
@@ -86,7 +87,7 @@ There are two main parts:
 - `decompress.py`
   - Python script for decoding Mewgenics cat data from a `.sav` SQLite database
   - decompresses raw LZ4 cat blobs
-  - extracts names, token identifiers, and base stats
+  - extracts names, save-derived status, authoritative sex, raw token identifiers, and base stats
   - can inspect individual cats with `--inspect`
 
 ### 2. Frontend planner in `ui/`
@@ -255,7 +256,7 @@ As of 2026-03-03, the planner supports:
 - CSV import
 - search by name, key, or token
 - status filtering (`alive`, `In House`, `Adventure`, `Gone`, `Unknown`)
-- gender/type filtering
+- gender filtering
 - stat floor filtering with per-stat minimum values
 - sorting by name, total stats, or any individual stat
 - manual room creation
@@ -264,6 +265,7 @@ As of 2026-03-03, the planner supports:
 - drag-and-drop room assignment
 - quick-move dropdown fallback
 - per-card eligibility toggle for auto-assign
+- `Gone` cats automatically excluded from auto-assign
 - auto-assign button for eligible unassigned cats
 - room-level breeding insight panels
 - JSON room-plan export
@@ -303,6 +305,8 @@ Recent work completed after this file was created:
 16. Added a real root README and replaced the old `ui/README.md` template with a workspace note.
 17. Added authoritative save-derived status export (`In House`, `Adventure`, `Gone`) to
     `decompress.py` and exposed status filtering in the planner UI.
+18. Updated eligibility handling so `Gone` cats remain visible for review but cannot be
+    included in auto-assign.
 
 ## Current coding conventions
 

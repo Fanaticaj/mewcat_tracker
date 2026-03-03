@@ -13,7 +13,8 @@ It does not modify cats or write changes back into the game.
 
 - decode a supported Mewgenics `.sav` file into CSV from the web UI
 - import cat CSV data into a browser-based planner
-- sort and filter cats by name, total stats, and individual stats
+- decode save-derived cat status and authoritative sex into planner-friendly CSV columns
+- sort and filter cats by status, sex, name, total stats, and individual stats
 - group cats into rooms with drag-and-drop or quick-move controls
 - highlight strong pairings based on complementary perfect 7s and overall stat ceilings
 - auto-assign eligible unassigned cats using the current heuristic planner
@@ -140,6 +141,7 @@ from the save format.
 - remove rooms
 - run with fewer than 3 rooms
 - exclude individual cats from auto-assign
+- automatically treat `Gone` cats as unavailable for auto-assign
 - save room plans to JSON
 - reload room plans later
 
@@ -222,6 +224,12 @@ Check all of the following:
 
 That is expected for some saves or edge cases. Clean the CSV manually, then import it
 with `Import cats CSV`.
+
+### I imported a save-derived CSV and see dead or donated cats
+
+That is expected. Mewgenics saves include historical cats as well as current ones. Use
+the status filter and switch to `Alive`, `In House`, or `Adventure` to focus on active
+cats.
 
 ### The app loads but old rooms are still present
 
