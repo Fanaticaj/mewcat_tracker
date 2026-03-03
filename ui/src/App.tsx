@@ -240,7 +240,9 @@ export default function App() {
     setActiveDropZone(null);
   }
 
-  const totalValidCats = cats.filter((cat) => !(cat.error && cat.error.length > 0)).length;
+  const totalValidCats = cats.filter(
+    (cat) => !(cat.error && cat.error.length > 0),
+  ).length;
   const assignedCount = assignedKeys.size;
 
   return (
@@ -489,7 +491,8 @@ function DropZoneSection({
         boxShadow: isActiveDropZone
           ? "0 20px 45px rgba(63, 122, 224, 0.14)"
           : "0 12px 32px rgba(15, 23, 42, 0.06)",
-        transition: "border-color 180ms ease, box-shadow 180ms ease, background 180ms ease",
+        transition:
+          "border-color 180ms ease, box-shadow 180ms ease, background 180ms ease",
         ...sx,
       }}
     >
@@ -547,8 +550,8 @@ function DropZoneSection({
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-                gap: 1.5,
+                gridTemplateColumns: "repeat(auto-fill, minmax(216px, 1fr))",
+                gap: 1.25,
               }}
             >
               {cats.map((cat) => (
@@ -601,19 +604,21 @@ function CatCard({
       onDragEnd={onDragEnd}
       sx={{
         position: "relative",
-        borderRadius: 4,
-        border: `1px solid ${accent}22`,
+        overflow: "hidden",
+        borderRadius: 3.5,
+        border: `1px solid ${accent}26`,
         background:
-          "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(249,250,251,0.98))",
+          "linear-gradient(180deg, rgba(255,255,255,0.99), rgba(248,250,252,0.99))",
         boxShadow: isDragging
-          ? "0 10px 24px rgba(15, 23, 42, 0.08)"
-          : "0 10px 24px rgba(15, 23, 42, 0.05)",
-        opacity: isDragging ? 0.48 : 1,
+          ? "0 12px 28px rgba(15, 23, 42, 0.10)"
+          : "0 8px 18px rgba(15, 23, 42, 0.06)",
+        opacity: isDragging ? 0.52 : 1,
         transform: isDragging ? "scale(0.985)" : "translateY(0)",
-        transition: "transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease",
+        transition:
+          "transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease",
         "&:hover": {
-          transform: "translateY(-2px)",
-          boxShadow: "0 16px 32px rgba(15, 23, 42, 0.08)",
+          transform: "translateY(-1px)",
+          boxShadow: "0 12px 24px rgba(15, 23, 42, 0.09)",
         },
       }}
     >
@@ -621,97 +626,135 @@ function CatCard({
         sx={{
           position: "absolute",
           inset: "0 auto 0 0",
-          width: 5,
-          borderTopLeftRadius: 16,
-          borderBottomLeftRadius: 16,
+          width: 4,
           background: accent,
         }}
       />
 
-      <CardContent sx={{ p: 2, pl: 2.5 }}>
-        <Stack spacing={1.5}>
-          <Stack direction="row" justifyContent="space-between" spacing={1.5}>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography variant="subtitle1" fontWeight={800} noWrap>
+      <CardContent sx={{ p: 1.5, pl: 2.2 }}>
+        <Stack spacing={1.25}>
+          <Stack direction="row" justifyContent="space-between" spacing={1.25}>
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography
+                variant="subtitle1"
+                fontWeight={800}
+                sx={{
+                  fontSize: "1rem",
+                  lineHeight: 1.15,
+                  display: "-webkit-box",
+                  overflow: "hidden",
+                  WebkitBoxOrient: "vertical",
+                  WebkitLineClamp: 2,
+                }}
+              >
                 {cat.name}
               </Typography>
-              <Typography color="text.secondary" variant="body2" noWrap>
-                {cat.key} · {cat.token}
+              <Typography
+                color="text.secondary"
+                variant="body2"
+                sx={{ mt: 0.35, fontSize: 12.5 }}
+              >
+                #{cat.key} / {cat.token}
               </Typography>
             </Box>
 
             <Box
               sx={{
                 flexShrink: 0,
-                borderRadius: 999,
-                background: accent,
+                minWidth: 68,
+                borderRadius: 2.5,
+                background: `linear-gradient(180deg, ${accent}, ${accent}cc)`,
                 color: "#fff",
-                px: 1.2,
-                py: 0.6,
-                fontSize: 12,
-                fontWeight: 800,
+                px: 1,
+                py: 0.85,
+                display: "grid",
+                placeItems: "center",
+                alignSelf: "center",
+                textAlign: "center",
+                boxShadow: `inset 0 1px 0 ${accent}55`,
               }}
             >
-              Total {catStatSum(cat)}
+              <Typography sx={{ fontSize: 10, lineHeight: 1, opacity: 0.86 }}>
+                TOTAL
+              </Typography>
+              <Typography sx={{ fontSize: 17, lineHeight: 1.1, fontWeight: 800 }}>
+                {catStatSum(cat)}
+              </Typography>
             </Box>
           </Stack>
 
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
             <Chip
               size="small"
               label={`${cat.token_kind}${cat.token_id ? ` ${cat.token_id}` : ""}`}
               sx={{
+                height: 24,
                 background: `${accent}16`,
                 color: accent,
                 fontWeight: 700,
+                "& .MuiChip-label": { px: 1, fontSize: 12 },
               }}
             />
             <Chip
               size="small"
               variant="outlined"
               label={currentRoom === "unassigned" ? "Ready to assign" : currentRoom}
+              sx={{
+                height: 24,
+                "& .MuiChip-label": { px: 1, fontSize: 12 },
+              }}
             />
           </Stack>
 
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-              gap: 1,
+              gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+              gap: 0.5,
             }}
           >
             {STAT_KEYS.map((key) => (
               <Box
                 key={key}
                 sx={{
+                  minWidth: 0,
                   borderRadius: 2,
-                  background: "rgba(15, 23, 42, 0.04)",
-                  px: 1,
-                  py: 0.9,
+                  border: "1px solid rgba(148, 163, 184, 0.18)",
+                  background: "rgba(15, 23, 42, 0.03)",
+                  px: 0.45,
+                  py: 0.7,
+                  textAlign: "center",
                 }}
               >
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: "block", fontSize: 10, lineHeight: 1 }}
+                >
                   {key}
                 </Typography>
-                <Typography fontWeight={700}>{cat[key]}</Typography>
+                <Typography
+                  sx={{ mt: 0.3, fontSize: 16, fontWeight: 800, lineHeight: 1 }}
+                >
+                  {cat[key]}
+                </Typography>
               </Box>
             ))}
           </Box>
 
-          <Typography variant="caption" color="text.secondary">
-            Drag this card to another room, or use quick move below.
-          </Typography>
-
-          <Box
-            component="label"
-            sx={{
-              display: "grid",
-              gap: 0.5,
-              fontSize: 12,
-              color: "text.secondary",
-            }}
-          >
-            Quick move
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ pt: 0.25 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                flexShrink: 0,
+                fontSize: 11.5,
+                fontWeight: 700,
+                letterSpacing: "0.04em",
+              }}
+            >
+              MOVE
+            </Typography>
             <select
               aria-label={`Move ${cat.name}`}
               value={currentRoom}
@@ -727,7 +770,7 @@ function CatCard({
                 </option>
               ))}
             </select>
-          </Box>
+          </Stack>
         </Stack>
       </CardContent>
     </Card>
@@ -741,11 +784,14 @@ const primaryActionSx = {
 
 const quickMoveSelectStyle: React.CSSProperties = {
   width: "100%",
-  borderRadius: 12,
-  border: "1px solid rgba(148, 163, 184, 0.45)",
-  background: "#fff",
-  padding: "10px 12px",
-  fontSize: 14,
+  borderRadius: 10,
+  border: "1px solid rgba(148, 163, 184, 0.35)",
+  background: "rgba(255, 255, 255, 0.92)",
+  padding: "8px 10px",
+  fontSize: 13,
+  lineHeight: 1.2,
   color: "#0f172a",
   outline: "none",
+  minHeight: "36px",
+  boxShadow: "inset 0 1px 2px rgba(15, 23, 42, 0.04)",
 };
