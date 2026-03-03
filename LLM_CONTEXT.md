@@ -171,6 +171,8 @@ Important columns include:
 
 - `key`
 - `name`
+- `gender`
+- `gender_source`
 - `token`
 - `token_kind`
 - `token_id`
@@ -184,6 +186,10 @@ Important columns include:
 - `error`
 
 Rows with a populated `error` field are treated as invalid in the planner UI.
+`gender` comes from the authoritative sex byte near the name block when decoding
+`.sav` files. The raw token fields are preserved separately because they often do
+not match actual sex.
+Sexual preference / compatibility flags are not currently decoded into the CSV.
 
 ### Persistence
 

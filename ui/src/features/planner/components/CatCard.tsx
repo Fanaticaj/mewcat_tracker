@@ -11,7 +11,7 @@ import {
 import { STAT_KEYS } from "../constants";
 import { quickMoveSelectStyle } from "../styles";
 import type { CatRow, RoomDestination } from "../types";
-import { catAccent, catStatSum } from "../utils";
+import { catAccent, catStatSum, getCatGenderLabel } from "../utils";
 
 type CatCardProps = {
   cat: CatRow;
@@ -131,7 +131,7 @@ export function CatCard({
           <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
             <Chip
               size="small"
-              label={`${cat.token_kind}${cat.token_id ? ` ${cat.token_id}` : ""}`}
+              label={getCatGenderLabel(cat)}
               sx={{
                 height: 24,
                 background: `${accent}16`,

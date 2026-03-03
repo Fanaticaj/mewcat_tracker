@@ -16,9 +16,28 @@ export function catStatSum(cat: CatRow) {
   return STAT_KEYS.reduce((acc, key) => acc + (Number(cat[key]) || 0), 0);
 }
 
+export function getCatGender(cat: CatRow) {
+  const rawGender = cat.gender?.trim().toLowerCase();
+  if (rawGender === "male" || rawGender === "female" || rawGender === "?") {
+    return rawGender;
+  }
+
+  if (cat.token_kind === "male" || cat.token_kind === "female") {
+    return cat.token_kind;
+  }
+
+  return "?";
+}
+
+export function getCatGenderLabel(cat: CatRow) {
+  const gender = getCatGender(cat);
+  if (gender === "?") return "Unknown";
+  return gender.charAt(0).toUpperCase() + gender.slice(1);
+}
+
 export function catAccent(cat: CatRow) {
-  if (cat.token_kind === "female") return "#b97e76";
-  if (cat.token_kind === "male") return "#6d785d";
+  if (getCatGender(cat) === "female") return "#b97e76";
+  if (getCatGender(cat) === "male") return "#6d785d";
   return "#8b7868";
 }
 

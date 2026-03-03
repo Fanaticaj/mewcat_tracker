@@ -25,6 +25,7 @@ import {
   buildPlannerRoomFile,
   createDefaultStatFilters,
   doesCatMatchStatFilters,
+  getCatGender,
   parsePlannerRoomFile,
   sanitizeRooms,
   sortCats,
@@ -107,7 +108,7 @@ export function usePlannerState() {
   const filteredCats = useMemo(() => {
     const query = search.trim().toLowerCase();
     const visible = validCats.filter((cat) => {
-      if (genderFilter !== "all" && cat.token_kind !== genderFilter) return false;
+      if (genderFilter !== "all" && getCatGender(cat) !== genderFilter) return false;
       if (!doesCatMatchStatFilters(cat, statFilters)) return false;
       if (!query) return true;
 
@@ -143,7 +144,7 @@ export function usePlannerState() {
     const kinds = new Set<string>();
 
     for (const cat of cats) {
-      if (cat.token_kind) kinds.add(cat.token_kind);
+      kinds.add(getCatGender(cat));
     }
 
     return Array.from(kinds).sort();

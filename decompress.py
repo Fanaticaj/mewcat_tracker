@@ -6,10 +6,13 @@ Core behavior:
 - Reads cats.data blobs
 - Decompresses each blob: [LE32 uncompressed_size] + [raw LZ4 block bytes]
 - Extracts:
-  - name (UTF-16LE, LE64 length prefix) at offset 12 in decompressed cat payload (typical)
-  - a token near the stat block (e.g., male288, female57, robotom, spidercat5)
-  - base stats (STR,DEX,CON,INT,SPD,CHA,LCK) as 7x 32-bit ints after a double
-    - tries both little-endian and big-endian and chooses the plausible one
+  - name from the front of the decompressed cat payload
+  - authoritative gender from the sex enum stored near the name block
+  - the raw token string near the stat block (e.g. male288, female57, robotom)
+  - base stats (STR,DEX,CON,INT,SPD,CHA,LCK)
+
+The parser prefers the structured blob layout and only falls back to the older
+token-scanning heuristic if a cat blob does not match the expected field order.
 
 Added: --inspect <key>
 - Writes cat_<key>_decompressed.bin
@@ -115,6 +118,65 @@ def read_u64_le(buf: bytes, off: int) -> int:
     return struct.unpack_from("<Q", buf, off)[0]
 
 
+class BinaryReader:
+    def __init__(self, data: bytes, pos: int = 0):
+        self.data = data
+        self.pos = pos
+
+    def u32(self) -> int:
+        value = struct.unpack_from("<I", self.data, self.pos)[0]
+        self.pos += 4
+        return value
+
+    def i32(self) -> int:
+        value = struct.unpack_from("<i", self.data, self.pos)[0]
+        self.pos += 4
+        return value
+
+    def u64(self) -> int:
+        value = struct.unpack_from("<Q", self.data, self.pos)[0]
+        self.pos += 8
+        return value
+
+    def f64(self) -> float:
+        value = struct.unpack_from("<d", self.data, self.pos)[0]
+        self.pos += 8
+        return value
+
+    def skip(self, size: int) -> None:
+        self.pos += size
+
+    def str(self) -> Optional[str]:
+        start = self.pos
+        try:
+            length = self.u64()
+            if length > 10_000:
+                self.pos = start
+                return None
+            data_start = self.pos
+            data_end = data_start + int(length)
+            if data_end > len(self.data):
+                self.pos = start
+                return None
+            value = self.data[data_start:data_end].decode("utf-8", errors="ignore")
+            self.pos = data_end
+            return value
+        except Exception:
+            self.pos = start
+            return None
+
+    def utf16str(self) -> str:
+        char_count = self.u64()
+        byte_len = int(char_count * 2)
+        data_start = self.pos
+        data_end = data_start + byte_len
+        if data_end > len(self.data):
+            raise ValueError("Truncated UTF-16 string")
+        value = self.data[data_start:data_end].decode("utf-16le", errors="strict")
+        self.pos = data_end
+        return value
+
+
 def try_read_utf16le_lenpref(buf: bytes, off: int) -> Optional[Tuple[str, int]]:
     """
     Try: [LE64 char_len] [UTF-16LE chars (char_len*2 bytes)]
@@ -186,6 +248,17 @@ def extract_all_ascii_lenpref(buf: bytes, min_len=3, max_len=128) -> List[Dict[s
     for off, s in iter_lenpref_ascii(buf, min_len=min_len, max_len=max_len):
         out.append({"offset": off, "length": len(s), "value": s})
     return out
+
+
+def normalize_gender(raw_gender: Optional[str]) -> str:
+    value = (raw_gender or "").strip().lower()
+    if value.startswith("male"):
+        return "male"
+    if value.startswith("female"):
+        return "female"
+    if value == "spidercat":
+        return "?"
+    return "?"
 
 
 # -------------------------
@@ -309,6 +382,8 @@ def split_token(token: str) -> Tuple[str, str]:
 class CatDecoded:
     key: int
     name: str
+    gender: str
+    gender_source: str
     token: str
     token_kind: str
     token_id: str
@@ -316,15 +391,64 @@ class CatDecoded:
     stats: Dict[str, int]
     abilities: List[str]
 
+def parse_structured_cat(dec: bytes) -> Tuple[str, str, str, str, Dict[str, int], str]:
+    reader = BinaryReader(dec)
+
+    reader.u32()  # breed id
+    reader.u64()  # unique id / seed
+    name = reader.utf16str()
+    name_end = reader.pos
+
+    # Empty / unknown string between name and parent refs.
+    if reader.str() is None:
+        raise ValueError("Could not parse the post-name string field")
+
+    reader.u64()  # parent uid a
+    reader.u64()  # parent uid b
+    collar = reader.str()
+    if collar is None:
+        raise ValueError("Could not parse collar string")
+
+    reader.u32()
+    reader.skip(64)
+    for _ in range(72):
+        reader.u32()
+    reader.skip(12)
+
+    token = reader.str()
+    if token is None:
+        raise ValueError("Could not parse raw gender/token string")
+
+    sex_code = dec[name_end + 8] if (name_end + 9) <= len(dec) else None
+    gender_from_code = {0: "male", 1: "female", 2: "?"}.get(sex_code)
+    if gender_from_code is not None:
+        gender = gender_from_code
+        gender_source = "sex_code"
+    else:
+        gender = normalize_gender(token)
+        gender_source = "token_fallback"
+
+    reader.f64()
+    stats = {STAT_NAMES[index]: reader.u32() for index in range(7)}
+    if score_stats(list(stats.values())) < 50:
+        raise ValueError("Structured parse produced implausible stats")
+
+    return name, gender, gender_source, token, stats, "le"
+
 
 def parse_cat(dec: bytes, key: int, include_abilities: bool) -> CatDecoded:
-    # Name is typically at offset 12 in decompressed cat payloads
-    name_tup = try_read_utf16le_lenpref(dec, 12)
-    if not name_tup:
-        raise ValueError("Could not parse name at expected offset 12")
-    name, _ = name_tup
+    try:
+        name, gender, gender_source, token, stats, endian = parse_structured_cat(dec)
+    except Exception:
+        # Fallback for unexpected blob layouts; older heuristic remains useful in inspect mode.
+        name_tup = try_read_utf16le_lenpref(dec, 12)
+        if not name_tup:
+            raise ValueError("Could not parse name at expected offset 12")
+        name, _ = name_tup
+        token, stats, endian, _tok_off = find_best_token_and_stats(dec)
+        gender = normalize_gender(token)
+        gender_source = "token_fallback"
 
-    token, stats, endian, _tok_off = find_best_token_and_stats(dec)
     token_kind, token_id = split_token(token)
 
     abilities: List[str] = []
@@ -350,6 +474,8 @@ def parse_cat(dec: bytes, key: int, include_abilities: bool) -> CatDecoded:
     return CatDecoded(
         key=key,
         name=name,
+        gender=gender,
+        gender_source=gender_source,
         token=token,
         token_kind=token_kind,
         token_id=token_id,
@@ -367,6 +493,7 @@ def build_inspect_report(dec: bytes, key: int) -> Dict[str, Any]:
         "cat_key": key,
         "decompressed_length": len(dec),
         "name_guess": None,
+        "structured_parse": None,
         "best_choice": None,
         "token_candidates": [],
         "utf16_lenpref_strings": [],
@@ -377,6 +504,19 @@ def build_inspect_report(dec: bytes, key: int) -> Dict[str, Any]:
     t = try_read_utf16le_lenpref(dec, 12)
     if t:
         report["name_guess"] = t[0]
+
+    try:
+        name, gender, gender_source, token, stats, endian = parse_structured_cat(dec)
+        report["structured_parse"] = {
+            "name": name,
+            "gender": gender,
+            "gender_source": gender_source,
+            "token": token,
+            "stats_endian": endian,
+            "stats": stats,
+        }
+    except Exception as e:
+        report["structured_parse_error"] = str(e)
 
     # best choice
     try:
@@ -497,6 +637,8 @@ def main():
             row: Dict[str, Any] = {
                 "key": cat.key,
                 "name": cat.name,
+                "gender": cat.gender,
+                "gender_source": cat.gender_source,
                 "token": cat.token,               # raw token
                 "token_kind": cat.token_kind,     # letters part
                 "token_id": cat.token_id,         # digits part
@@ -512,6 +654,8 @@ def main():
                 {
                     "key": key,
                     "name": "",
+                    "gender": "",
+                    "gender_source": "",
                     "token": "",
                     "token_kind": "",
                     "token_id": "",
@@ -522,7 +666,17 @@ def main():
                 }
             )
 
-    headers = ["key", "name", "token", "token_kind", "token_id", "stats_endian", *STAT_NAMES]
+    headers = [
+        "key",
+        "name",
+        "gender",
+        "gender_source",
+        "token",
+        "token_kind",
+        "token_id",
+        "stats_endian",
+        *STAT_NAMES,
+    ]
     if args.abilities:
         headers.append("abilities_preview")
     headers.append("error")

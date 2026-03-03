@@ -3,6 +3,8 @@ import type { STAT_KEYS } from "./constants";
 export type CatRow = {
   key: string;
   name: string;
+  gender?: string;
+  gender_source?: string;
   token: string;
   token_kind: string;
   token_id: string;

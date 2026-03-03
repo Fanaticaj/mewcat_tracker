@@ -360,16 +360,16 @@ export function PlannerHeader({
                 <Grid container spacing={1.25}>
                   <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
                     <FormControl fullWidth size="small">
-                      <InputLabel>Gender / Type</InputLabel>
+                      <InputLabel>Gender</InputLabel>
                       <Select
-                        label="Gender / Type"
+                        label="Gender"
                         value={genderFilter}
                         onChange={(event) => onGenderFilterChange(event.target.value)}
                       >
                         <MenuItem value="all">All</MenuItem>
                         {tokenKinds.map((kind) => (
                           <MenuItem key={kind} value={kind}>
-                            {kind}
+                            {kind === "?" ? "Unknown" : kind}
                           </MenuItem>
                         ))}
                       </Select>
