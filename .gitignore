@@ -1,4 +1,6 @@
+# Relative Game data
 *.sav
+*.csv
 
 # Logs
 logs
