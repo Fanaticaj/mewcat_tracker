@@ -382,6 +382,7 @@ def split_token(token: str) -> Tuple[str, str]:
 class CatDecoded:
     key: int
     name: str
+    status: str
     gender: str
     gender_source: str
     token: str
@@ -436,7 +437,7 @@ def parse_structured_cat(dec: bytes) -> Tuple[str, str, str, str, Dict[str, int]
     return name, gender, gender_source, token, stats, "le"
 
 
-def parse_cat(dec: bytes, key: int, include_abilities: bool) -> CatDecoded:
+def parse_cat(dec: bytes, key: int, status: str, include_abilities: bool) -> CatDecoded:
     try:
         name, gender, gender_source, token, stats, endian = parse_structured_cat(dec)
     except Exception:
@@ -474,6 +475,7 @@ def parse_cat(dec: bytes, key: int, include_abilities: bool) -> CatDecoded:
     return CatDecoded(
         key=key,
         name=name,
+        status=status,
         gender=gender,
         gender_source=gender_source,
         token=token,
@@ -592,12 +594,79 @@ def print_tsv(rows: List[Dict[str, Any]], headers: List[str]) -> None:
         print("\t".join(str(r.get(h, "")) for h in headers))
 
 
-def read_cats_table(db_path: str) -> List[Tuple[int, bytes]]:
+def get_house_info(conn: sqlite3.Connection) -> Dict[int, str]:
+    row = conn.execute("SELECT data FROM files WHERE key = 'house_state'").fetchone()
+    if not row or len(row[0]) < 8:
+        return {}
+
+    data = row[0]
+    count = struct.unpack_from("<I", data, 4)[0]
+    pos = 8
+    result: Dict[int, str] = {}
+
+    for _ in range(count):
+        if pos + 8 > len(data):
+            break
+
+        cat_key = struct.unpack_from("<I", data, pos)[0]
+        pos += 8
+        room_len = struct.unpack_from("<I", data, pos)[0]
+        pos += 8
+        room_name = ""
+
+        if room_len > 0:
+            room_name = data[pos : pos + room_len].decode("ascii", errors="ignore")
+            pos += room_len
+
+        pos += 24
+        result[cat_key] = room_name
+
+    return result
+
+
+def get_adventure_keys(conn: sqlite3.Connection) -> set[int]:
+    keys: set[int] = set()
+
+    try:
+        row = conn.execute("SELECT data FROM files WHERE key = 'adventure_state'").fetchone()
+        if not row or len(row[0]) < 8:
+            return keys
+
+        data = row[0]
+        count = struct.unpack_from("<I", data, 4)[0]
+        pos = 8
+
+        for _ in range(count):
+            if pos + 8 > len(data):
+                break
+
+            value = struct.unpack_from("<Q", data, pos)[0]
+            pos += 8
+            cat_key = (value >> 32) & 0xFFFF_FFFF
+            if cat_key:
+                keys.add(cat_key)
+    except Exception:
+        pass
+
+    return keys
+
+
+def read_save_data(db_path: str) -> Tuple[List[Tuple[int, bytes]], Dict[int, str], set[int]]:
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
     rows = cur.execute("SELECT key, data FROM cats ORDER BY key").fetchall()
+    house_info = get_house_info(conn)
+    adventure_keys = get_adventure_keys(conn)
     conn.close()
-    return rows
+    return rows, house_info, adventure_keys
+
+
+def get_cat_status(key: int, house_info: Dict[int, str], adventure_keys: set[int]) -> str:
+    if key in adventure_keys:
+        return "Adventure"
+    if key in house_info:
+        return "In House"
+    return "Gone"
 
 
 def main():
@@ -609,7 +678,7 @@ def main():
     ap.add_argument("--outdir", default=".", help="Output directory for --inspect artifacts (default: .)")
     args = ap.parse_args()
 
-    rows = read_cats_table(args.db)
+    rows, house_info, adventure_keys = read_save_data(args.db)
 
     # Inspect mode: only one cat, dump artifacts
     if args.inspect is not None:
@@ -624,6 +693,7 @@ def main():
 
         dec = decompress_cat_blob(blob)
         report = build_inspect_report(dec, target_key)
+        report["status"] = get_cat_status(target_key, house_info, adventure_keys)
         write_inspect_outputs(args.outdir, target_key, dec, report)
         return
 
@@ -632,11 +702,17 @@ def main():
     for key, blob in rows:
         try:
             dec = decompress_cat_blob(blob)
-            cat = parse_cat(dec, key, include_abilities=args.abilities)
+            cat = parse_cat(
+                dec,
+                key,
+                get_cat_status(key, house_info, adventure_keys),
+                include_abilities=args.abilities,
+            )
 
             row: Dict[str, Any] = {
                 "key": cat.key,
                 "name": cat.name,
+                "status": cat.status,
                 "gender": cat.gender,
                 "gender_source": cat.gender_source,
                 "token": cat.token,               # raw token
@@ -654,6 +730,7 @@ def main():
                 {
                     "key": key,
                     "name": "",
+                    "status": get_cat_status(key, house_info, adventure_keys),
                     "gender": "",
                     "gender_source": "",
                     "token": "",
@@ -669,6 +746,7 @@ def main():
     headers = [
         "key",
         "name",
+        "status",
         "gender",
         "gender_source",
         "token",

@@ -11,7 +11,7 @@ import {
 import { STAT_KEYS } from "../constants";
 import { quickMoveSelectStyle } from "../styles";
 import type { CatRow, RoomDestination } from "../types";
-import { catAccent, catStatSum, getCatGenderLabel } from "../utils";
+import { catAccent, catStatSum, getCatGenderLabel, getCatStatus } from "../utils";
 
 type CatCardProps = {
   cat: CatRow;
@@ -41,6 +41,8 @@ export function CatCard({
   roomNames,
 }: CatCardProps) {
   const accent = catAccent(cat);
+  const status = getCatStatus(cat);
+  const isEligibilityLocked = status === "Gone";
 
   return (
     <Card
@@ -143,6 +145,15 @@ export function CatCard({
             <Chip
               size="small"
               variant="outlined"
+              label={getCatStatus(cat)}
+              sx={{
+                height: 24,
+                "& .MuiChip-label": { px: 1, fontSize: 12 },
+              }}
+            />
+            <Chip
+              size="small"
+              variant="outlined"
               label={currentRoom === "unassigned" ? "Ready to assign" : currentRoom}
               sx={{
                 height: 24,
@@ -204,12 +215,17 @@ export function CatCard({
                   AUTO ASSIGN
                 </Typography>
                 <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-                  {isEligibleForAutoAssign ? "Eligible" : "Excluded"}
+                  {isEligibilityLocked
+                    ? "Unavailable"
+                    : isEligibleForAutoAssign
+                      ? "Eligible"
+                      : "Excluded"}
                 </Typography>
               </Box>
               <Switch
                 size="small"
                 checked={isEligibleForAutoAssign}
+                disabled={isEligibilityLocked}
                 inputProps={{ "aria-label": `Include ${cat.name} in auto-assign` }}
                 onChange={() => onToggleEligibility(cat.key)}
                 onClick={(event) => event.stopPropagation()}

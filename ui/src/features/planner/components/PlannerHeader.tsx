@@ -27,7 +27,12 @@ import {
 } from "@mui/material";
 import { STAT_KEYS } from "../constants";
 import { primaryActionSx, secondaryActionSx } from "../styles";
-import type { SortDirection, SortField, StatFilterState } from "../types";
+import type {
+  SortDirection,
+  SortField,
+  StatusFilter,
+  StatFilterState,
+} from "../types";
 
 type PlannerHeaderProps = {
   assignedCount: number;
@@ -49,6 +54,7 @@ type PlannerHeaderProps = {
   onSearchChange: (value: string) => void;
   onSortDirectionChange: (value: SortDirection) => void;
   onSortFieldChange: (value: SortField) => void;
+  onStatusFilterChange: (value: StatusFilter) => void;
   onStatFilterChange: (stat: keyof StatFilterState, value: string) => void;
   plannerMessage: string;
   plannerMessageTone: "info" | "success" | "error";
@@ -57,6 +63,8 @@ type PlannerHeaderProps = {
   sortDirection: SortDirection;
   sortField: SortField;
   statFilters: StatFilterState;
+  statusFilter: StatusFilter;
+  statusOptions: StatusFilter[];
   tokenKinds: string[];
   totalValidCats: number;
 };
@@ -87,6 +95,7 @@ export function PlannerHeader({
   onSearchChange,
   onSortDirectionChange,
   onSortFieldChange,
+  onStatusFilterChange,
   onStatFilterChange,
   plannerMessage,
   plannerMessageTone,
@@ -95,6 +104,8 @@ export function PlannerHeader({
   sortDirection,
   sortField,
   statFilters,
+  statusFilter,
+  statusOptions,
   tokenKinds,
   totalValidCats,
 }: PlannerHeaderProps) {
@@ -107,6 +118,7 @@ export function PlannerHeader({
   const activeControlCount =
     activeStatFilterCount +
     (genderFilter !== "all" ? 1 : 0) +
+    (statusFilter !== "all" ? 1 : 0) +
     (sortField !== "name" ? 1 : 0) +
     (sortDirection !== "asc" ? 1 : 0);
 
@@ -349,7 +361,7 @@ export function PlannerHeader({
                       Sort and filter controls
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Keep the roster focused by trait floor, gender, and ranking order.
+                      Keep the roster focused by status, trait floor, gender, and ranking order.
                     </Typography>
                   </Box>
                   <Button variant="text" onClick={onResetStatFilters} sx={secondaryActionSx}>
@@ -358,6 +370,26 @@ export function PlannerHeader({
                 </Stack>
 
                 <Grid container spacing={1.25}>
+                  <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Status</InputLabel>
+                      <Select
+                        label="Status"
+                        value={statusFilter}
+                        onChange={(event) =>
+                          onStatusFilterChange(event.target.value as StatusFilter)
+                        }
+                      >
+                        <MenuItem value="all">All</MenuItem>
+                        {statusOptions.map((status) => (
+                          <MenuItem key={status} value={status}>
+                            {status === "alive" ? "Alive" : status}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
                   <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
                     <FormControl fullWidth size="small">
                       <InputLabel>Gender</InputLabel>
@@ -376,7 +408,7 @@ export function PlannerHeader({
                     </FormControl>
                   </Grid>
 
-                  <Grid size={{ xs: 12, sm: 6, lg: 4 }}>
+                  <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
                     <FormControl fullWidth size="small">
                       <InputLabel>Sort by</InputLabel>
                       <Select
@@ -411,7 +443,7 @@ export function PlannerHeader({
                     </FormControl>
                   </Grid>
 
-                  <Grid size={{ xs: 12, sm: 6, lg: 2 }}>
+                  <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
                     <Chip
                       label={
                         activeStatFilterCount > 0

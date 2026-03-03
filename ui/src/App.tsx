@@ -18,6 +18,7 @@ export default function App() {
     exportRoomFile,
     filteredCats,
     genderFilter,
+    statusFilter,
     handleDragEnd,
     handleDragLeave,
     handleDragOver,
@@ -36,6 +37,7 @@ export default function App() {
     roomNames,
     search,
     setGenderFilter,
+    setStatusFilter,
     setNewRoomName,
     setSearch,
     setSortDirection,
@@ -43,6 +45,7 @@ export default function App() {
     sortDirection,
     sortField,
     statFilters,
+    statusOptions,
     toggleCatEligibility,
     tokenKinds,
     totalValidCats,
@@ -75,6 +78,7 @@ export default function App() {
           onSearchChange={setSearch}
           onSortDirectionChange={setSortDirection}
           onSortFieldChange={setSortField}
+          onStatusFilterChange={setStatusFilter}
           onStatFilterChange={updateStatFilter}
           plannerMessage={plannerMessage}
           plannerMessageTone={plannerMessageTone}
@@ -83,6 +87,8 @@ export default function App() {
           sortDirection={sortDirection}
           sortField={sortField}
           statFilters={statFilters}
+          statusFilter={statusFilter}
+          statusOptions={statusOptions}
           tokenKinds={tokenKinds}
           totalValidCats={totalValidCats}
         />

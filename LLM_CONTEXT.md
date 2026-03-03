@@ -171,6 +171,7 @@ Important columns include:
 
 - `key`
 - `name`
+- `status`
 - `gender`
 - `gender_source`
 - `token`
@@ -186,6 +187,8 @@ Important columns include:
 - `error`
 
 Rows with a populated `error` field are treated as invalid in the planner UI.
+`status` comes from the save file's `house_state` and `adventure_state` records
+when decoding `.sav` files.
 `gender` comes from the authoritative sex byte near the name block when decoding
 `.sav` files. The raw token fields are preserved separately because they often do
 not match actual sex.
@@ -251,6 +254,7 @@ As of 2026-03-03, the planner supports:
 - `.sav` upload from the web UI with local Python-backed CSV generation
 - CSV import
 - search by name, key, or token
+- status filtering (`alive`, `In House`, `Adventure`, `Gone`, `Unknown`)
 - gender/type filtering
 - stat floor filtering with per-stat minimum values
 - sorting by name, total stats, or any individual stat
@@ -297,6 +301,8 @@ Recent work completed after this file was created:
 15. Tightened the visual system with a more compact header, collapsible sort/filter controls,
     and reduced corner radii for better readability.
 16. Added a real root README and replaced the old `ui/README.md` template with a workspace note.
+17. Added authoritative save-derived status export (`In House`, `Adventure`, `Gone`) to
+    `decompress.py` and exposed status filtering in the planner UI.
 
 ## Current coding conventions
 

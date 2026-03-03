@@ -8,6 +8,7 @@ import type {
   RoomStatLeader,
   SortDirection,
   SortField,
+  StatusFilter,
   StatFilterState,
   StatKey,
 } from "./types";
@@ -33,6 +34,26 @@ export function getCatGenderLabel(cat: CatRow) {
   const gender = getCatGender(cat);
   if (gender === "?") return "Unknown";
   return gender.charAt(0).toUpperCase() + gender.slice(1);
+}
+
+export function getCatStatus(cat: CatRow) {
+  const rawStatus = cat.status?.trim();
+  if (
+    rawStatus === "In House" ||
+    rawStatus === "Adventure" ||
+    rawStatus === "Gone"
+  ) {
+    return rawStatus;
+  }
+  return "Unknown";
+}
+
+export function doesCatMatchStatusFilter(cat: CatRow, statusFilter: StatusFilter) {
+  const status = getCatStatus(cat);
+
+  if (statusFilter === "all") return true;
+  if (statusFilter === "alive") return status !== "Gone";
+  return status === statusFilter;
 }
 
 export function catAccent(cat: CatRow) {

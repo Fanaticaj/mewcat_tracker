@@ -108,6 +108,7 @@ The planner expects these important columns:
 
 - `key`
 - `name`
+- `status`
 - `gender`
 - `gender_source`
 - `token`
@@ -124,6 +125,8 @@ The planner expects these important columns:
 - `error`
 
 Rows with a populated `error` field are treated as invalid in the planner UI.
+`status` is decoded from the save file's `house_state` and `adventure_state`
+tables and will be one of `In House`, `Adventure`, or `Gone` when present.
 `gender` is the field the planner should use for sex-based filtering. `token`,
 `token_kind`, and `token_id` are preserved as raw save-token metadata and should
 not be treated as authoritative sex data.

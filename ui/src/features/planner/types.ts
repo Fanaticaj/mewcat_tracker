@@ -3,6 +3,7 @@ import type { STAT_KEYS } from "./constants";
 export type CatRow = {
   key: string;
   name: string;
+  status?: string;
   gender?: string;
   gender_source?: string;
   token: string;
@@ -28,6 +29,14 @@ export type RoomDestination = string | "unassigned";
 export type SortField = "name" | "total" | StatKey;
 
 export type SortDirection = "asc" | "desc";
+
+export type StatusFilter =
+  | "all"
+  | "alive"
+  | "In House"
+  | "Adventure"
+  | "Gone"
+  | "Unknown";
 
 export type StatFilterState = Record<StatKey, string>;
 

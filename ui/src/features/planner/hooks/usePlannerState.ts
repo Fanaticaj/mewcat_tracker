@@ -18,6 +18,7 @@ import type {
   SavDecodeResponse,
   SortDirection,
   SortField,
+  StatusFilter,
   StatFilterState,
 } from "../types";
 import {
@@ -25,7 +26,9 @@ import {
   buildPlannerRoomFile,
   createDefaultStatFilters,
   doesCatMatchStatFilters,
+  doesCatMatchStatusFilter,
   getCatGender,
+  getCatStatus,
   parsePlannerRoomFile,
   sanitizeRooms,
   sortCats,
@@ -54,6 +57,7 @@ export function usePlannerState() {
   const [newRoomName, setNewRoomName] = useState("");
   const [search, setSearch] = useState("");
   const [genderFilter, setGenderFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [statFilters, setStatFilters] = useState<StatFilterState>(
@@ -103,12 +107,17 @@ export function usePlannerState() {
     return assigned;
   }, [rooms, validCatKeys]);
 
-  const isCatEligible = (catKey: string) => eligibility[catKey] ?? true;
+  const isCatEligible = (catKey: string) => {
+    const cat = catsByKey.get(catKey);
+    if (cat && getCatStatus(cat) === "Gone") return false;
+    return eligibility[catKey] ?? true;
+  };
 
   const filteredCats = useMemo(() => {
     const query = search.trim().toLowerCase();
     const visible = validCats.filter((cat) => {
       if (genderFilter !== "all" && getCatGender(cat) !== genderFilter) return false;
+      if (!doesCatMatchStatusFilter(cat, statusFilter)) return false;
       if (!doesCatMatchStatFilters(cat, statFilters)) return false;
       if (!query) return true;
 
@@ -120,7 +129,15 @@ export function usePlannerState() {
     });
 
     return sortCats(visible, sortField, sortDirection);
-  }, [genderFilter, search, sortDirection, sortField, statFilters, validCats]);
+  }, [
+    genderFilter,
+    search,
+    sortDirection,
+    sortField,
+    statFilters,
+    statusFilter,
+    validCats,
+  ]);
 
   const filteredCatKeys = useMemo(
     () => new Set(filteredCats.map((cat) => cat.key)),
@@ -135,7 +152,10 @@ export function usePlannerState() {
   const eligibleUnassignedCats = useMemo(
     () =>
       validCats.filter(
-        (cat) => !assignedKeys.has(cat.key) && (eligibility[cat.key] ?? true),
+        (cat) =>
+          !assignedKeys.has(cat.key) &&
+          getCatStatus(cat) !== "Gone" &&
+          (eligibility[cat.key] ?? true),
       ),
     [assignedKeys, eligibility, validCats],
   );
@@ -148,6 +168,16 @@ export function usePlannerState() {
     }
 
     return Array.from(kinds).sort();
+  }, [cats]);
+
+  const statusOptions = useMemo(() => {
+    const statuses = new Set<StatusFilter>(["alive"]);
+
+    for (const cat of cats) {
+      statuses.add(getCatStatus(cat));
+    }
+
+    return Array.from(statuses);
   }, [cats]);
 
   const visibleRoomCats = useMemo(() => {
@@ -306,6 +336,9 @@ export function usePlannerState() {
   }
 
   function toggleCatEligibility(catKey: string) {
+    const cat = catsByKey.get(catKey);
+    if (cat && getCatStatus(cat) === "Gone") return;
+
     setEligibility((current) => ({
       ...current,
       [catKey]: !(current[catKey] ?? true),
@@ -439,6 +472,7 @@ export function usePlannerState() {
     exportRoomFile,
     filteredCats,
     genderFilter,
+    statusFilter,
     handleDragEnd,
     handleDragLeave,
     handleDragOver,
@@ -457,6 +491,7 @@ export function usePlannerState() {
     roomNames,
     search,
     setGenderFilter,
+    setStatusFilter,
     setNewRoomName,
     setSearch,
     setSortDirection,
@@ -464,6 +499,7 @@ export function usePlannerState() {
     sortDirection,
     sortField,
     statFilters,
+    statusOptions,
     toggleCatEligibility,
     tokenKinds,
     totalValidCats: validCats.length,
